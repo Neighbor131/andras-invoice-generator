@@ -363,6 +363,7 @@ function App() {
       ...s,
       business: { ...s.business, country },
       invoice: { ...s.invoice, currency: defaultCurrencyForCountry(country, region), terms: r.defaultTerms, dueDate: dueDateForTerms(r.defaultTerms, s.invoice.issueDate),
+        language: defaultInvoiceLanguage(region),
         number: invoiceNumberForCountry(s.invoice.number, country),
         items: s.invoice.items.map((it) => ({ ...it, vat: s.business.taxRegistered ? r.defaultTaxRate : 0 })) },
     }));

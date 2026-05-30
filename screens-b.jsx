@@ -71,6 +71,8 @@ function invoicePdfFileName(store) {
 function buildInvoiceHtmlElement(store, region) {
   const r = REGIONS[region] || REGIONS.US;
   const inv = store.invoice || freshInvoice(region);
+  const copy = invoiceCopy(inv, region);
+  const lang = invoiceLanguage(inv, region);
   const b = store.business || {};
   const c = store.client || {};
   const accent = invoiceAccentRecord(inv.accent);
@@ -95,43 +97,43 @@ function buildInvoiceHtmlElement(store, region) {
       </tr>`;
   }).join('') : `
       <tr>
-        <td colspan="4" style="padding:28px 0;border-bottom:1px solid #E1E8D5;text-align:center;color:#9AA18D;">No line items yet</td>
+        <td colspan="4" style="padding:28px 0;border-bottom:1px solid #E1E8D5;text-align:center;color:#9AA18D;">${htmlEscape(copy.noLineItems)}</td>
       </tr>`;
 
   const node = document.createElement('div');
   node.style.cssText = 'width:794px;min-height:1123px;background:#fff;pointer-events:none;';
   node.innerHTML = `
-    <section style="width:794px;min-height:1123px;background:#fff;color:#1E2019;font-family:'Poppins',Arial,sans-serif;padding:0;box-sizing:border-box;">
+    <section lang="${htmlEscape(lang)}" style="width:794px;min-height:1123px;background:#fff;color:#1E2019;font-family:${lang === 'ka' ? "'Noto Sans Georgian','Poppins',Arial,sans-serif" : "'Poppins',Arial,sans-serif"};padding:0;box-sizing:border-box;">
       <div style="height:10px;background:${accent.hex};"></div>
       <div style="padding:58px 64px 44px;box-sizing:border-box;">
         <header style="display:flex;align-items:flex-start;justify-content:space-between;gap:32px;margin-bottom:46px;">
           <div style="display:flex;align-items:center;gap:16px;min-width:0;">
             ${logo}
             <div>
-              <div style="font-size:15px;font-weight:600;letter-spacing:-.01em;color:#1E2019;">${htmlEscape(b.name || 'Your business')}</div>
-              <div style="font-size:11px;line-height:1.45;color:#69705F;margin-top:4px;max-width:250px;">${htmlEscape(b.address || 'Business address')}</div>
+              <div style="font-size:15px;font-weight:600;letter-spacing:-.01em;color:#1E2019;">${htmlEscape(b.name || copy.yourBusiness)}</div>
+              <div style="font-size:11px;line-height:1.45;color:#69705F;margin-top:4px;max-width:250px;">${htmlEscape(b.address || copy.businessAddress)}</div>
             </div>
           </div>
           <div style="text-align:right;min-width:180px;">
-            <div style="font-size:36px;line-height:1;font-weight:650;letter-spacing:-.03em;color:#1E2019;">Invoice</div>
+            <div style="font-size:36px;line-height:1.15;font-weight:650;letter-spacing:-.03em;color:#1E2019;">${htmlEscape(copy.invoiceTitle)}</div>
             <div style="margin-top:12px;font-size:12px;font-weight:600;color:${accent.hex};letter-spacing:.08em;text-transform:uppercase;">#${htmlEscape(inv.number || 'draft')}</div>
           </div>
         </header>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:34px;margin-bottom:40px;">
           <div style="border-top:1px solid #D0DBC2;padding-top:18px;">
-            <div style="font-size:10px;font-weight:700;color:#69705F;letter-spacing:.14em;text-transform:uppercase;margin-bottom:12px;">Billed to</div>
-            <div style="font-size:17px;font-weight:600;letter-spacing:-.01em;">${htmlEscape(c.name || 'Client name')}</div>
+            <div style="font-size:10px;font-weight:700;color:#69705F;letter-spacing:.14em;text-transform:uppercase;margin-bottom:12px;">${htmlEscape(copy.billedTo)}</div>
+            <div style="font-size:17px;font-weight:600;letter-spacing:-.01em;">${htmlEscape(c.name || copy.clientName)}</div>
             <div style="font-size:12px;line-height:1.65;color:#69705F;margin-top:6px;">
-              ${htmlEscape([c.company, c.email, c.address].filter(Boolean).join(' • ') || 'Client details')}
+              ${htmlEscape([c.company, c.email, c.address].filter(Boolean).join(' • ') || copy.clientDetails)}
             </div>
           </div>
           <div style="border-top:1px solid #D0DBC2;padding-top:18px;">
             <div style="display:grid;grid-template-columns:1fr auto;gap:9px;font-size:12px;color:#69705F;">
-              <span>Issued</span><strong style="color:#1E2019;font-weight:500;">${htmlEscape(inv.issueDate || '-')}</strong>
-              <span>Due</span><strong style="color:#1E2019;font-weight:600;">${htmlEscape(inv.dueDate || '-')}</strong>
-              <span>Terms</span><strong style="color:#1E2019;font-weight:500;">${htmlEscape(inv.terms || '-')}</strong>
-              <span>Currency</span><strong style="color:#1E2019;font-weight:500;">${htmlEscape(inv.currency || r.code)}</strong>
+              <span>${htmlEscape(copy.issued)}</span><strong style="color:#1E2019;font-weight:500;">${htmlEscape(inv.issueDate || '-')}</strong>
+              <span>${htmlEscape(copy.due)}</span><strong style="color:#1E2019;font-weight:600;">${htmlEscape(inv.dueDate || '-')}</strong>
+              <span>${htmlEscape(copy.terms)}</span><strong style="color:#1E2019;font-weight:500;">${htmlEscape(invoiceTermsLabel(inv.terms, inv, region))}</strong>
+              <span>${htmlEscape(copy.currency)}</span><strong style="color:#1E2019;font-weight:500;">${htmlEscape(inv.currency || r.code)}</strong>
             </div>
           </div>
         </div>
@@ -139,10 +141,10 @@ function buildInvoiceHtmlElement(store, region) {
         <table style="width:100%;border-collapse:collapse;margin-bottom:28px;font-size:12px;">
           <thead>
             <tr>
-              <th style="text-align:left;padding:0 0 12px;border-bottom:2px solid #1E2019;font-size:10px;color:#69705F;letter-spacing:.13em;text-transform:uppercase;">Description</th>
-              <th style="text-align:right;padding:0 0 12px;border-bottom:2px solid #1E2019;font-size:10px;color:#69705F;letter-spacing:.13em;text-transform:uppercase;width:58px;">Qty</th>
-              <th style="text-align:right;padding:0 0 12px;border-bottom:2px solid #1E2019;font-size:10px;color:#69705F;letter-spacing:.13em;text-transform:uppercase;width:112px;">Price</th>
-              <th style="text-align:right;padding:0 0 12px;border-bottom:2px solid #1E2019;font-size:10px;color:#69705F;letter-spacing:.13em;text-transform:uppercase;width:120px;">Amount</th>
+              <th style="text-align:left;padding:0 0 12px;border-bottom:2px solid #1E2019;font-size:10px;color:#69705F;letter-spacing:.13em;text-transform:uppercase;">${htmlEscape(copy.description)}</th>
+              <th style="text-align:right;padding:0 0 12px;border-bottom:2px solid #1E2019;font-size:10px;color:#69705F;letter-spacing:.13em;text-transform:uppercase;width:58px;">${htmlEscape(copy.qty)}</th>
+              <th style="text-align:right;padding:0 0 12px;border-bottom:2px solid #1E2019;font-size:10px;color:#69705F;letter-spacing:.13em;text-transform:uppercase;width:112px;">${htmlEscape(copy.price)}</th>
+              <th style="text-align:right;padding:0 0 12px;border-bottom:2px solid #1E2019;font-size:10px;color:#69705F;letter-spacing:.13em;text-transform:uppercase;width:120px;">${htmlEscape(copy.amount)}</th>
             </tr>
           </thead>
           <tbody>
@@ -151,16 +153,16 @@ function buildInvoiceHtmlElement(store, region) {
         </table>
 
         <div style="display:flex;justify-content:flex-end;margin-bottom:36px;">
-          <div style="width:270px;">
-            <div style="display:flex;justify-content:space-between;font-size:12px;color:#69705F;margin-bottom:10px;">
-              <span>Subtotal</span><span style="color:#1E2019;font-weight:500;">${htmlEscape(fmtMoney(totals.subtotal, region, { currency: inv.currency }))}</span>
+            <div style="width:270px;">
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:#69705F;margin-bottom:10px;">
+              <span>${htmlEscape(copy.subtotal)}</span><span style="color:#1E2019;font-weight:500;">${htmlEscape(fmtMoney(totals.subtotal, region, { currency: inv.currency }))}</span>
             </div>
             <div style="display:flex;justify-content:space-between;font-size:12px;color:#69705F;margin-bottom:14px;">
-              <span>${htmlEscape(r.taxName)}</span><span style="color:#1E2019;font-weight:500;">${htmlEscape(taxRegistered ? fmtMoney(totals.tax, region, { currency: inv.currency }) : 'Not applicable')}</span>
+              <span>${htmlEscape(r.taxName)}</span><span style="color:#1E2019;font-weight:500;">${htmlEscape(taxRegistered ? fmtMoney(totals.tax, region, { currency: inv.currency }) : copy.notApplicable)}</span>
             </div>
             <div style="height:1px;background:#D0DBC2;margin-bottom:16px;"></div>
             <div style="display:flex;align-items:baseline;justify-content:space-between;gap:18px;">
-              <span style="font-size:14px;font-weight:600;color:#1E2019;">Total due</span>
+              <span style="font-size:14px;font-weight:600;color:#1E2019;">${htmlEscape(copy.totalDue)}</span>
               <span style="font-size:24px;font-weight:700;letter-spacing:-.025em;color:${accent.hex};">${htmlEscape(fmtMoney(totals.total, region, { currency: inv.currency }))}</span>
             </div>
           </div>
@@ -168,26 +170,26 @@ function buildInvoiceHtmlElement(store, region) {
 
         <div style="display:grid;grid-template-columns:1.2fr .8fr;gap:18px;margin-top:24px;">
           <div style="background:#F3F6EB;border:1px solid #E1E8D5;border-radius:18px;padding:22px 24px;">
-            <div style="font-size:10px;font-weight:700;color:${accent.hex};letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px;">Payment details</div>
-            <div style="font-size:14px;font-weight:600;color:#1E2019;">Pay to ${htmlEscape(b.accountName || b.name || 'your account')}</div>
+            <div style="font-size:10px;font-weight:700;color:${accent.hex};letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px;">${htmlEscape(copy.paymentDetails)}</div>
+            <div style="font-size:14px;font-weight:600;color:#1E2019;">${htmlEscape(copy.payTo)} ${htmlEscape(b.accountName || b.name || copy.yourAccount)}</div>
             <div style="font-size:12px;line-height:1.55;color:#69705F;margin-top:8px;">${htmlEscape(paymentRail.label)}: ${htmlEscape(b.iban || '-')}</div>
             ${taxRegistered ? `<div style="font-size:12px;color:#69705F;margin-top:3px;">${htmlEscape(r.taxIdName)}: ${htmlEscape(b.taxId || '-')}</div>` : ''}
           </div>
           <div style="background:#fff;border:1px solid #E1E8D5;border-radius:18px;padding:22px 24px;">
-            <div style="font-size:10px;font-weight:700;color:#69705F;letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px;">Accepted methods</div>
-            <div style="font-size:13px;line-height:1.55;color:#394032;">${htmlEscape(methods || 'Bank transfer')}</div>
-            ${inv.paymentLink ? `<div style="margin-top:12px;font-size:11px;font-weight:600;color:${accent.hex};">Payment instructions included</div>` : ''}
+            <div style="font-size:10px;font-weight:700;color:#69705F;letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px;">${htmlEscape(copy.acceptedMethods)}</div>
+            <div style="font-size:13px;line-height:1.55;color:#394032;">${htmlEscape(methods || copy.bankTransfer)}</div>
+            ${inv.paymentLink ? `<div style="margin-top:12px;font-size:11px;font-weight:600;color:${accent.hex};">${htmlEscape(copy.paymentInstructions)}</div>` : ''}
           </div>
         </div>
 
         ${inv.notes ? `
           <div style="margin-top:28px;border-top:1px solid #E1E8D5;padding-top:18px;">
-            <div style="font-size:10px;font-weight:700;color:#69705F;letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px;">Notes</div>
+            <div style="font-size:10px;font-weight:700;color:#69705F;letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px;">${htmlEscape(copy.notes)}</div>
             <div style="font-size:12px;line-height:1.65;color:#394032;">${htmlEscape(inv.notes)}</div>
           </div>` : ''}
 
         <footer style="display:flex;justify-content:space-between;align-items:center;margin-top:46px;padding-top:16px;border-top:1px solid #E1E8D5;font-size:10.5px;color:#69705F;">
-          <span>Generated by Andras</span>
+          <span>${htmlEscape(copy.generatedBy)}</span>
           <span>${htmlEscape(r.code)} · ${htmlEscape(inv.currency || r.code)}</span>
         </footer>
       </div>
@@ -506,6 +508,23 @@ function InvoiceStylePicker({ value, onChange }) {
   );
 }
 
+function InvoiceLanguagePicker({ value, onChange }) {
+  const current = INVOICE_COPY[value] ? value : 'en';
+  return (
+    <div style={{ display: 'inline-grid', gridTemplateColumns: '1fr 1fr', gap: 4, padding: 4, border: '1px solid var(--line)', borderRadius: 'var(--r-pill)', background: 'var(--surface-2)', width: '100%', maxWidth: 260 }}>
+      {['en', 'ka'].map((lang) => {
+        const on = current === lang;
+        return (
+          <button key={lang} onClick={() => onChange(lang)}
+            style={{ height: 34, border: 'none', borderRadius: 'var(--r-pill)', background: on ? 'var(--surface)' : 'transparent', color: on ? 'var(--ink)' : 'var(--muted)', boxShadow: on ? 'var(--sh-1)' : 'none', cursor: 'pointer', fontSize: 12.5, fontWeight: 580, fontFamily: lang === 'ka' ? "'Noto Sans Georgian', var(--font-ui)" : 'var(--font-ui)' }}>
+            {INVOICE_COPY[lang].label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 /* ============================================================
    Live Readiness rail (the signature element)
 ============================================================ */
@@ -560,6 +579,7 @@ function ReadinessRail({ store, region, go, compact }) {
 function InvoiceBuilder({ store, update, region, go, showRail }) {
   const r = REGIONS[region];
   const inv = store.invoice;
+  const copy = invoiceCopy(inv, region);
   const accent = invoiceAccentRecord(inv.accent);
   const setInv = (patch) => update({ invoice: { ...store.invoice, ...patch } });
   const totals = computeTotals(inv, region);
@@ -603,9 +623,18 @@ function InvoiceBuilder({ store, update, region, go, showRail }) {
 
           <Card>
             <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 220px', gap: 16, alignItems: 'center' }}>
-              <Field label="Invoice style" hint="Client-facing accent for the PDF and preview.">
-                <InvoiceStylePicker value={inv.accent} onChange={(accent) => setInv({ accent })} />
-              </Field>
+              <div style={{ display: 'grid', gap: 14 }}>
+                <Field label="Invoice style" hint="Client-facing accent for the PDF and preview.">
+                  <InvoiceStylePicker value={inv.accent} onChange={(accent) => setInv({ accent })} />
+                </Field>
+                <Field label="Invoice language" hint="Controls the labels used in the preview and PDF.">
+                  <InvoiceLanguagePicker value={invoiceLanguage(inv, region)} onChange={(language) => {
+                    const currentDefault = INVOICE_COPY[invoiceLanguage(inv, region)].defaultNotes;
+                    const nextDefault = INVOICE_COPY[language].defaultNotes;
+                    setInv({ language, notes: inv.notes === currentDefault ? nextDefault : inv.notes });
+                  }} />
+                </Field>
+              </div>
               <div style={{ border: '1px solid var(--line)', borderRadius: 'var(--r-md)', background: 'var(--surface)', overflow: 'hidden', boxShadow: 'var(--sh-1)' }}>
                 <div style={{ height: 6, background: accent.hex }} />
                 <div style={{ padding: 14, display: 'grid', gap: 10 }}>
@@ -624,7 +653,7 @@ function InvoiceBuilder({ store, update, region, go, showRail }) {
           {/* line items */}
           <Card pad={false}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 70px 110px' + (taxRegistered ? ' 86px' : '') + ' 110px 34px', gap: 10, padding: '14px 18px 10px', alignItems: 'center' }}>
-              {['Description', 'Qty', 'Unit price', ...(taxRegistered ? [r.taxName] : []), 'Amount', ''].map((h, i) => (
+              {[copy.description, copy.qty, copy.unitPrice, ...(taxRegistered ? [r.taxName] : []), copy.amount, ''].map((h, i) => (
                 <div key={i} className="eyebrow" style={{ fontSize: 10.5, textAlign: i === 0 ? 'left' : (i === (taxRegistered ? 4 : 3) ? 'right' : 'center') }}>{h}</div>
               ))}
             </div>
@@ -636,7 +665,7 @@ function InvoiceBuilder({ store, update, region, go, showRail }) {
                 <Input value={it.price} onChange={(v) => setItem(idx, { price: v.replace(/[^\d.]/g, '') })} mono prefix={currencyRecord(inv.currency).symbol} placeholder="0.00" style={{ height: 40 }} />
                 {taxRegistered && (
                   <Select value={String(it.vat)} onChange={(v) => setItem(idx, { vat: Number(v) })}
-                    options={[{ value: '0', label: '0%' }, { value: '5', label: '5%' }, { value: '21', label: '21%' }, { value: '23', label: '23%' }]} style={{ height: 40 }} />
+                    options={[{ value: '0', label: '0%' }, { value: '5', label: '5%' }, { value: '18', label: '18%' }, { value: '21', label: '21%' }, { value: '23', label: '23%' }]} style={{ height: 40 }} />
                 )}
                 <div className="num" style={{ textAlign: 'right', fontSize: 14, fontWeight: 540, color: lineTotal(it) ? 'var(--ink)' : 'var(--faint)' }}>{fmtMoney(lineTotal(it), region, { currency: inv.currency })}</div>
                 <button onClick={() => delItem(idx)} disabled={inv.items.length === 1} aria-label="Remove line"
@@ -656,14 +685,14 @@ function InvoiceBuilder({ store, update, region, go, showRail }) {
               <Textarea value={inv.notes} onChange={(v) => setInv({ notes: v })} rows={4} />
             </Field>
             <Card style={{ padding: 18 }}>
-              {[['Subtotal', totals.subtotal]].map(([l, v]) => (
+              {[[copy.subtotal, totals.subtotal]].map(([l, v]) => (
                 <Row key={l} l={l} v={fmtMoney(v, region, { currency: inv.currency })} />
               ))}
               {taxRegistered && <Row l={`${r.taxName}`} v={fmtMoney(totals.tax, region, { currency: inv.currency })} />}
-              {!taxRegistered && <Row l={`${r.taxName}`} v="Not applicable" muted />}
+              {!taxRegistered && <Row l={`${r.taxName}`} v={copy.notApplicable} muted />}
               <Divider style={{ margin: '10px 0' }} />
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                <span style={{ fontSize: 14, fontWeight: 580, whiteSpace: 'nowrap' }}>Total due</span>
+                <span style={{ fontSize: 14, fontWeight: 580, whiteSpace: 'nowrap' }}>{copy.totalDue}</span>
                 <span className="num" style={{ fontSize: 22, fontWeight: 600, color: 'var(--brand)' }}>{fmtMoney(totals.total, region, { currency: inv.currency })}</span>
               </div>
               <div style={{ fontSize: 11.5, color: 'var(--muted)', textAlign: 'right', marginTop: 2 }} className="num">{inv.currency} · due {inv.dueDate}</div>
@@ -770,6 +799,8 @@ function CheckGroup({ title, tone, items, go, stepOf, action }) {
 function Preview({ store, region, go, onFinish }) {
   const r = REGIONS[region];
   const inv = store.invoice, b = store.business, c = store.client || {};
+  const copy = invoiceCopy(inv, region);
+  const lang = invoiceLanguage(inv, region);
   const accent = invoiceAccentRecord(inv.accent);
   const totals = computeTotals(inv, region);
   const taxRegistered = b.taxRegistered === true;
@@ -796,7 +827,7 @@ function Preview({ store, region, go, onFinish }) {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr)', placeItems: 'center' }}>
         {/* the document */}
-        <div style={{ width: '100%', maxWidth: 720, background: 'var(--surface)', borderRadius: 'var(--r-lg)', boxShadow: 'var(--sh-3)', border: '1px solid var(--line)', overflow: 'hidden' }}>
+        <div lang={lang} style={{ width: '100%', maxWidth: 720, background: 'var(--surface)', borderRadius: 'var(--r-lg)', boxShadow: 'var(--sh-3)', border: '1px solid var(--line)', overflow: 'hidden', fontFamily: lang === 'ka' ? "'Noto Sans Georgian', var(--font-ui)" : 'var(--font-ui)' }}>
           <div style={{ height: 6, background: accent.hex }} />
           <div style={{ padding: '40px 44px 44px' }}>
             {/* header */}
@@ -811,13 +842,13 @@ function Preview({ store, region, go, onFinish }) {
                     ? <div style={{ width: 44, height: 44, borderRadius: 10, background: 'var(--brand)', color: 'var(--on-brand)', display: 'grid', placeItems: 'center', fontSize: 22, fontWeight: 700 }}>{(b.name || 'A')[0].toUpperCase()}</div>
                     : <Logo size={26} withWordmark={false} />}
                   <div>
-                    <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-0.01em' }}>{b.name || 'Your business'}</div>
-                    <div style={{ fontSize: 12.5, color: 'var(--muted)' }}>{b.address || 'Business address'}</div>
+                    <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-0.01em' }}>{b.name || copy.yourBusiness}</div>
+                    <div style={{ fontSize: 12.5, color: 'var(--muted)' }}>{b.address || copy.businessAddress}</div>
                   </div>
                 </div>
               </Hot>
               <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 26, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--ink)' }}>Invoice</div>
+                <div style={{ fontSize: 26, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--ink)', lineHeight: 1.2 }}>{copy.invoiceTitle}</div>
                 <Hot id="num" target="build" style={{ display: 'inline-block', marginTop: 4 }}>
                   <div className="num" style={{ fontSize: 13, color: 'var(--ink-2)', padding: '0 4px' }}>#{inv.number}</div>
                 </Hot>
@@ -828,20 +859,20 @@ function Preview({ store, region, go, onFinish }) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 28, marginBottom: 32 }}>
               <Hot id="client" target="client">
                 <div style={{ padding: 4 }}>
-                  <div className="eyebrow" style={{ marginBottom: 6 }}>Billed to</div>
-                  <div style={{ fontSize: 14.5, fontWeight: 560 }}>{c.name || 'Client name'}</div>
+                  <div className="eyebrow" style={{ marginBottom: 6 }}>{copy.billedTo}</div>
+                  <div style={{ fontSize: 14.5, fontWeight: 560 }}>{c.name || copy.clientName}</div>
                   <div style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.5 }}>{c.company || ''}{c.company ? <br/> : null}{c.email}<br/>{c.address}</div>
                 </div>
               </Hot>
               <div style={{ padding: 4 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 6 }}>
-                  <span style={{ color: 'var(--muted)' }}>Issued</span><span className="num">{inv.issueDate}</span>
+                  <span style={{ color: 'var(--muted)' }}>{copy.issued}</span><span className="num">{inv.issueDate}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 6 }}>
-                  <span style={{ color: 'var(--muted)' }}>Due</span><span className="num" style={{ fontWeight: 560 }}>{inv.dueDate}</span>
+                  <span style={{ color: 'var(--muted)' }}>{copy.due}</span><span className="num" style={{ fontWeight: 560 }}>{inv.dueDate}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-                  <span style={{ color: 'var(--muted)' }}>Terms</span><span style={{ whiteSpace: 'nowrap' }}>{inv.terms}</span>
+                  <span style={{ color: 'var(--muted)' }}>{copy.terms}</span><span style={{ whiteSpace: 'nowrap' }}>{invoiceTermsLabel(inv.terms, inv, region)}</span>
                 </div>
               </div>
             </div>
@@ -850,7 +881,7 @@ function Preview({ store, region, go, onFinish }) {
             <Hot id="items" target="build">
               <div style={{ padding: 4 }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 50px 100px 100px', gap: 10, padding: '0 0 9px', borderBottom: '1.5px solid var(--ink)' }}>
-                  {['Description', 'Qty', 'Price', 'Amount'].map((h, i) => (
+                  {[copy.description, copy.qty, copy.price, copy.amount].map((h, i) => (
                     <div key={h} className="eyebrow" style={{ fontSize: 10, textAlign: i === 0 ? 'left' : 'right' }}>{h}</div>
                   ))}
                 </div>
@@ -863,7 +894,7 @@ function Preview({ store, region, go, onFinish }) {
                   </div>
                 ))}
                 {inv.items.filter((i) => i.desc).length === 0 && (
-                  <div style={{ padding: '20px 0', textAlign: 'center', color: 'var(--faint)', fontSize: 13 }}>No line items yet — click to add them</div>
+                  <div style={{ padding: '20px 0', textAlign: 'center', color: 'var(--faint)', fontSize: 13 }}>{copy.noLineItemsAction}</div>
                 )}
               </div>
             </Hot>
@@ -871,11 +902,11 @@ function Preview({ store, region, go, onFinish }) {
             {/* totals */}
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 18 }}>
               <div style={{ width: 240 }}>
-                <Row l="Subtotal" v={fmtMoney(totals.subtotal, region, { currency: inv.currency })} />
+                <Row l={copy.subtotal} v={fmtMoney(totals.subtotal, region, { currency: inv.currency })} />
                 {taxRegistered ? <Row l={r.taxName} v={fmtMoney(totals.tax, region, { currency: inv.currency })} /> : <Row l={r.taxName} v="—" muted />}
                 <Divider style={{ margin: '8px 0' }} />
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                  <span style={{ fontWeight: 600, fontSize: 14, whiteSpace: 'nowrap' }}>Total due</span>
+                  <span style={{ fontWeight: 600, fontSize: 14, whiteSpace: 'nowrap' }}>{copy.totalDue}</span>
                   <span className="num" style={{ fontSize: 19, fontWeight: 600, color: accent.hex }}>{fmtMoney(totals.total, region, { currency: inv.currency })}</span>
                 </div>
               </div>
@@ -885,10 +916,10 @@ function Preview({ store, region, go, onFinish }) {
             <div style={{ marginTop: 30, padding: '16px 18px', background: 'var(--surface-2)', borderRadius: 'var(--r-md)', display: 'flex', alignItems: 'center', gap: 14 }}>
               <span style={{ color: accent.hex, flex: 'none' }}><Icon name="bank" size={22} /></span>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 560 }}>Pay to {b.accountName || b.name || 'your account'}</div>
+                <div style={{ fontSize: 13, fontWeight: 560 }}>{copy.payTo} {b.accountName || b.name || copy.yourAccount}</div>
                 <div className="num" style={{ fontSize: 12, color: 'var(--muted)' }}>{paymentRail.label}: {b.iban || '—'}{taxRegistered ? ` · ${r.taxIdName} ${b.taxId}` : ''}</div>
               </div>
-              {inv.paymentLink && <Badge tone="brand" icon="link">Pay online</Badge>}
+              {inv.paymentLink && <Badge tone="brand" icon="link">{copy.payOnline}</Badge>}
             </div>
             {inv.notes && <div style={{ marginTop: 16, fontSize: 12.5, color: 'var(--muted)', lineHeight: 1.5 }}>{inv.notes}</div>}
           </div>
