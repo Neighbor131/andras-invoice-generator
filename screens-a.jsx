@@ -287,7 +287,7 @@ function GuidedSetup({ store, update, region, go, setupLayout }) {
   const paymentRail = paymentRailForCountry(b.country, region);
   const [open, setOpen] = useStateA('biz');
 
-  const bizDone = !!(b.name && b.address);
+  const bizDone = !!(b.name && b.email && b.address);
   const taxDone = b.taxRegistered === false || !!b.taxId;
   const bankDone = !!(b.accountName && b.iban);
   const allDone = bizDone && taxDone && bankDone;
@@ -305,15 +305,20 @@ function GuidedSetup({ store, update, region, go, setupLayout }) {
 
   const Body = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <SetupSection icon="building" title="Business profile" desc="Your name and address as they’ll appear on the invoice"
+      <SetupSection icon="building" title="Business profile" desc="Your business details and reply-to email"
         done={bizDone} open={open === 'biz'} locked={setupLayout === 'focus' && open !== 'biz'}
         onToggle={() => setOpen(open === 'biz' ? '' : 'biz')}>
         <div style={{ display: 'grid', gap: 18, alignItems: 'start' }}>
           <LogoUpload business={b} onChange={setB} />
           <div style={{ display: 'grid', gap: 12 }}>
-            <Field label="Business name" required>
-              <Input value={b.name} onChange={(v) => setB({ name: v })} placeholder="e.g. Atlas Design Co." />
-            </Field>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <Field label="Business name" required>
+                <Input value={b.name} onChange={(v) => setB({ name: v })} placeholder="e.g. Atlas Design Co." />
+              </Field>
+              <Field label="Your email" required hint="Client replies go to this address.">
+                <Input value={b.email || ''} onChange={(v) => setB({ email: v })} placeholder="you@company.com" prefix={<Icon name="mail" size={16} />} />
+              </Field>
+            </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <Field label="You operate as">
                 <Select value={b.type} onChange={(v) => setB({ type: v })}
