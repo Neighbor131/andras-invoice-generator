@@ -1,0 +1,180 @@
+/* ============================================================
+   ANDRAS — Design tokens
+   Calm, trustworthy, modern small-business finance platform.
+   Palette based on coolors.co/587b7f-1e2019-394032-8dab7f-cfee9e.
+   ============================================================ */
+
+:root {
+  /* --- Brand palette --- */
+  --palette-bluegreen: #587B7F;
+  --palette-ink: #1E2019;
+  --palette-olive: #394032;
+  --palette-sage: #8DAB7F;
+  --palette-lime: #CFEE9E;
+
+  --brand:        #384D48;
+  --brand-strong: #2B3E39;
+  --brand-press:  #20312D;
+  --brand-soft:   color-mix(in srgb, #384D48 15%, #ffffff);
+  --brand-softer: color-mix(in srgb, #384D48 7%, #ffffff);
+  --brand-ring:   color-mix(in srgb, #384D48 34%, transparent);
+  --on-brand:     #ffffff;
+
+  /* --- Warm green neutrals --- */
+  --bg:        #FAFBF5;
+  --surface:   oklch(1 0 0);
+  --surface-2: #F3F6EB;
+  --surface-3: #EBF0E2;
+  --ink:       var(--palette-ink);
+  --ink-2:     #394032;
+  --muted:     #69705F;
+  --faint:     #9AA18D;
+  --line:      #E1E8D5;
+  --line-2:    #D0DBC2;
+  --line-strong: #B8C8A9;
+
+  /* --- Semantic (shared chroma/lightness family) --- */
+  --ok:        #81C784;
+  --ok-soft:   color-mix(in srgb, #81C784 18%, #ffffff);
+  --warn:      #FB8C00;
+  --warn-soft: color-mix(in srgb, #FB8C00 16%, #ffffff);
+  --warn-ink:  #9A5600;
+  --bad:       #E53935;
+  --bad-soft:  color-mix(in srgb, #E53935 14%, #ffffff);
+
+  /* --- Radii --- */
+  --r-xs: 6px;
+  --r-sm: 9px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 22px;
+  --r-pill: 999px;
+
+  /* --- Shadows (soft, cool) --- */
+  --sh-1: 0 1px 2px rgb(30 32 25 / 0.06), 0 1px 1px rgb(30 32 25 / 0.04);
+  --sh-2: 0 2px 6px rgb(30 32 25 / 0.07), 0 1px 2px rgb(30 32 25 / 0.05);
+  --sh-3: 0 8px 24px rgb(30 32 25 / 0.10), 0 2px 6px rgb(30 32 25 / 0.06);
+  --sh-4: 0 18px 50px rgb(30 32 25 / 0.16), 0 6px 16px rgb(30 32 25 / 0.08);
+
+  /* --- Type --- */
+  --font-ui: 'Schibsted Grotesk', system-ui, -apple-system, sans-serif;
+  --font-num: 'IBM Plex Mono', ui-monospace, monospace;
+
+  /* --- Density (overridden by [data-density]) --- */
+  --d-gap: 16px;
+  --d-pad: 22px;
+  --d-row: 46px;
+  --d-control: 42px;
+}
+
+[data-density="compact"] {
+  --d-gap: 11px;
+  --d-pad: 16px;
+  --d-row: 38px;
+  --d-control: 36px;
+}
+[data-density="comfy"] {
+  --d-gap: 20px;
+  --d-pad: 28px;
+  --d-row: 54px;
+  --d-control: 48px;
+}
+
+/* Accent overrides set by Tweaks via [data-accent] */
+[data-accent="emerald"] {
+  --brand:        var(--palette-sage);
+  --brand-strong: #627C56;
+  --brand-press:  #4C6442;
+  --brand-soft:   color-mix(in srgb, var(--palette-sage) 22%, #ffffff);
+  --brand-softer: color-mix(in srgb, var(--palette-sage) 11%, #ffffff);
+  --brand-ring:   color-mix(in srgb, var(--palette-sage) 42%, transparent);
+  --on-brand:     var(--palette-ink);
+}
+[data-accent="violet"] {
+  --brand:        var(--palette-lime);
+  --brand-strong: #667B3E;
+  --brand-press:  #526633;
+  --brand-soft:   color-mix(in srgb, var(--palette-lime) 34%, #ffffff);
+  --brand-softer: color-mix(in srgb, var(--palette-lime) 18%, #ffffff);
+  --brand-ring:   color-mix(in srgb, var(--palette-lime) 46%, transparent);
+  --on-brand:     var(--palette-ink);
+}
+[data-accent="ink"] {
+  --brand:        var(--palette-olive);
+  --brand-strong: var(--palette-ink);
+  --brand-press:  #14160F;
+  --brand-soft:   color-mix(in srgb, var(--palette-olive) 12%, #ffffff);
+  --brand-softer: color-mix(in srgb, var(--palette-olive) 6%, #ffffff);
+  --brand-ring:   color-mix(in srgb, var(--palette-olive) 32%, transparent);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-ui);
+  background: var(--bg);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+/* Tabular numerics everywhere money lives */
+.num {
+  font-family: var(--font-num);
+  font-feature-settings: "tnum" 1;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 999px; border: 3px solid var(--bg); }
+::-webkit-scrollbar-thumb:hover { background: var(--line-strong); }
+
+::selection { background: var(--brand-soft); }
+
+button { font-family: inherit; }
+input, textarea, select { font-family: inherit; }
+
+.kbd-mono {
+  font-family: var(--font-num);
+  font-size: 0.78em;
+  letter-spacing: 0.02em;
+}
+
+/* Tiny uppercase label */
+.eyebrow {
+  font-family: var(--font-num);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+@keyframes fadeUp {
+  from { opacity: 1; transform: none; }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes fadeIn {
+  from { opacity: 1; }
+  to   { opacity: 1; }
+}
+@keyframes pop {
+  from { transform: scale(1); opacity: 1; }
+  to   { transform: scale(1); opacity: 1; }
+}
+@keyframes drawCheck {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes shimmer {
+  to { background-position: 200% 0; }
+}
