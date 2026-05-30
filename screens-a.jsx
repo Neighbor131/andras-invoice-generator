@@ -209,8 +209,12 @@ function DashboardEmpty({ go, region, emptyState, onTour }) {
             </div>
           </div>
           {/* invoice glance */}
-          <div style={{ background: 'var(--surface-2)', borderLeft: '1px solid var(--line)', padding: 30, display: 'grid', placeItems: 'center' }}>
-            <div style={{ width: '100%', maxWidth: 280, background: 'var(--surface)', borderRadius: 'var(--r-md)', boxShadow: 'var(--sh-3)', padding: 22, transform: 'rotate(-1.4deg)' }}>
+          <div style={{ position: 'relative', minHeight: 420, borderLeft: '1px solid var(--line)', padding: 30, display: 'grid', placeItems: 'center', overflow: 'hidden',
+            backgroundImage: 'linear-gradient(130deg, rgba(255,255,255,0.18), rgba(255,255,255,0.02)), url("assets/hero-texture.jpeg")',
+            backgroundSize: 'cover',
+            backgroundPosition: '42% 50%' }}>
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(255,255,255,0.1), rgba(255,255,255,0.24))', pointerEvents: 'none' }} />
+            <div style={{ position: 'relative', width: '100%', maxWidth: 280, background: 'oklch(1 0 0 / 0.92)', backdropFilter: 'blur(4px)', borderRadius: 'var(--r-md)', boxShadow: '0 22px 58px rgba(30,32,25,0.24)', padding: 22, transform: 'rotate(-1.4deg)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 18 }}>
                 <Logo size={20} withWordmark={false} />
                 <div style={{ textAlign: 'right' }}>
