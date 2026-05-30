@@ -996,7 +996,7 @@ function Success({ store, region, go, resetFlow, elapsed }) {
     <div style={{ animation: 'fadeUp .35s ease both', maxWidth: 880 }}>
       <div style={{ textAlign: 'center', marginBottom: 30 }}>
         <div style={{ width: 'min(320px, 100%)', aspectRatio: '1263 / 757', margin: '0 auto 18px', display: 'grid', placeItems: 'center', animation: 'fadeUp .35s ease both' }}>
-          <img src="assets/invoice-sent-illustration.png" alt="Invoice sent illustration"
+          <img src="assets/invoice-sent-illustration.png?v=success-illustration-2" alt="Invoice sent illustration"
             style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
         </div>
         <h1 style={{ margin: 0, fontSize: 28, fontWeight: 600, letterSpacing: '-0.025em' }}>Invoice #{inv.number} is ready</h1>
