@@ -571,7 +571,7 @@ function InvoiceBuilder({ store, update, region, go, showRail }) {
     const items = inv.items.map((it, i) => (i === idx ? { ...it, ...patch } : it));
     setInv({ items });
   };
-  const addItem = () => setInv({ items: [...inv.items, { desc: '', qty: 1, price: '', vat: taxRegistered ? (region === 'EU' ? 21 : 0) : 0 }] });
+  const addItem = () => setInv({ items: [...inv.items, { desc: '', qty: 1, price: '', vat: taxRegistered ? r.defaultTaxRate : 0 }] });
   const delItem = (idx) => setInv({ items: inv.items.filter((_, i) => i !== idx) });
 
   return (
@@ -592,9 +592,7 @@ function InvoiceBuilder({ store, update, region, go, showRail }) {
               <Field label="Issue date"><Input value={inv.issueDate} onChange={(v) => setInv({ issueDate: v })} mono /></Field>
               <Field label="Payment terms">
                 <Select value={inv.terms} onChange={(v) => {
-                  const days = v === 'Due on receipt' ? 0 : parseInt(v.replace(/\D/g, '')) || 14;
-                  const d = new Date('2026-05-30'); d.setDate(d.getDate() + days);
-                  setInv({ terms: v, dueDate: d.toISOString().slice(0, 10) });
+                  setInv({ terms: v, dueDate: dueDateForTerms(v, inv.issueDate) });
                 }} options={['Due on receipt', 'Net 7', 'Net 14', 'Net 30', 'Net 60']} />
               </Field>
               <Field label="Currency" hint={`${currencyRecord(inv.currency).code} · ${currencyRecord(inv.currency).symbol}`}>

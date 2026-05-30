@@ -74,6 +74,8 @@ const TOUR_STEPS = [
   },
 ];
 
+const MARKET_SEQUENCE = ['US', 'EU', 'GE'];
+
 function CaseOverlay({ screen, on }) {
   if (!on) return null;
   const n = CASE_NOTES[screen];
@@ -264,7 +266,7 @@ function Topbar({ screen, go, region, setRegion, elapsedLive, onTour }) {
             <Icon name="clock" size={15} /> {elapsedLive}
           </div>
         )}
-        <button onClick={() => setRegion(region === 'US' ? 'EU' : 'US')}
+        <button onClick={() => setRegion(MARKET_SEQUENCE[(MARKET_SEQUENCE.indexOf(region) + 1) % MARKET_SEQUENCE.length] || 'US')}
           style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '6px 11px', borderRadius: 'var(--r-pill)', border: '1px solid var(--line-2)', background: 'var(--surface)', cursor: 'pointer', fontSize: 12.5, fontWeight: 530, color: 'var(--ink-2)' }}
           title="Toggle region (demo)">
           <Icon name="globe" size={15} /> {REGIONS[region].code} · {region}
@@ -356,12 +358,13 @@ function App() {
   // re-seed currency/terms/country when region changes
   useE(() => {
     const r = REGIONS[region];
+    const country = defaultCountryForRegion(region);
     setStore((s) => ({
       ...s,
-      business: { ...s.business, country: s.business.country || defaultCountryForRegion(region) },
-      invoice: { ...s.invoice, currency: s.invoice.currency || defaultCurrencyForCountry(s.business.country || defaultCountryForRegion(region), region), terms: r.defaultTerms,
-        number: invoiceNumberForCountry(s.invoice.number, s.business.country || defaultCountryForRegion(region)),
-        items: s.invoice.items.map((it) => ({ ...it, vat: s.business.taxRegistered ? (region === 'EU' ? 21 : 0) : 0 })) },
+      business: { ...s.business, country },
+      invoice: { ...s.invoice, currency: defaultCurrencyForCountry(country, region), terms: r.defaultTerms, dueDate: dueDateForTerms(r.defaultTerms, s.invoice.issueDate),
+        number: invoiceNumberForCountry(s.invoice.number, country),
+        items: s.invoice.items.map((it) => ({ ...it, vat: s.business.taxRegistered ? r.defaultTaxRate : 0 })) },
     }));
   }, [region]);
 
@@ -492,7 +495,7 @@ function App() {
         <TweakRadio label="Density" value={t.density} options={['compact', 'regular', 'comfy']} onChange={(v) => setTweak('density', v)} />
 
         <TweakSection label="Region / compliance" />
-        <TweakRadio label="Market" value={t.region} options={['US', 'EU']} onChange={(v) => setTweak('region', v)} />
+        <TweakRadio label="Market" value={t.region} options={MARKET_SEQUENCE} onChange={(v) => setTweak('region', v)} />
 
         <TweakSection label="Flow variations" />
         <TweakRadio label="Empty state" value={t.emptyState} options={['hero', 'tasks']} onChange={(v) => setTweak('emptyState', v)} />

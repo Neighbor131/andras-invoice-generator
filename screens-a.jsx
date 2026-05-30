@@ -423,7 +423,7 @@ function GuidedSetup({ store, update, region, go, setupLayout }) {
         background: 'var(--brand-softer)', border: '1px solid var(--brand-soft)', borderRadius: 'var(--r-md)' }}>
         <span style={{ color: 'var(--brand)', flex: 'none' }}><Icon name="sparkle" size={19} /></span>
         <div style={{ fontSize: 13.5, color: 'var(--ink-2)' }}>
-          <b style={{ color: 'var(--ink)', fontWeight: 580 }}>Smart defaults applied.</b> Based on {b.country || r.label}, we’ve preset your currency to <span className="num">{defaultCurrencyForCountry(b.country, region)}</span>, terms to <b>{r.defaultTerms}</b>{region === 'EU' ? `, and ${r.taxName} to 21%` : ''}. Change anything below.
+          <b style={{ color: 'var(--ink)', fontWeight: 580 }}>Smart defaults applied.</b> Based on {b.country || r.label}, we’ve preset your currency to <span className="num">{defaultCurrencyForCountry(b.country, region)}</span>, terms to <b>{r.defaultTerms}</b>{r.defaultTaxRate ? `, and ${r.taxName} to ${r.defaultTaxRate}%` : ''}. Change anything below.
         </div>
       </div>
 

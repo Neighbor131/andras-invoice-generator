@@ -18,6 +18,14 @@ const REGIONS = {
     legalLine: 'Reverse-charge eligible', countryOptions: ['Germany', 'Netherlands', 'France', 'Ireland', 'Spain'],
     defaultTerms: 'Net 14',
   },
+  GE: {
+    label: 'Georgia',
+    currency: 'GEL', symbol: '₾', code: 'GEL',
+    taxName: 'VAT', taxIdName: 'Tax ID', taxIdPlaceholder: '123456789',
+    bankFieldName: 'IBAN', defaultTaxRate: 18,
+    legalLine: 'Georgia VAT rules', countryOptions: ['Georgia'],
+    defaultTerms: 'Net 15',
+  },
 };
 
 const COUNTRY_DATA = 'AF|Afghanistan,AL|Albania,DZ|Algeria,AD|Andorra,AO|Angola,AG|Antigua and Barbuda,AR|Argentina,AM|Armenia,AU|Australia,AT|Austria,AZ|Azerbaijan,BS|Bahamas,BH|Bahrain,BD|Bangladesh,BB|Barbados,BY|Belarus,BE|Belgium,BZ|Belize,BJ|Benin,BT|Bhutan,BO|Bolivia,BA|Bosnia and Herzegovina,BW|Botswana,BR|Brazil,BN|Brunei,BG|Bulgaria,BF|Burkina Faso,BI|Burundi,CV|Cabo Verde,KH|Cambodia,CM|Cameroon,CA|Canada,CF|Central African Republic,TD|Chad,CL|Chile,CN|China,CO|Colombia,KM|Comoros,CG|Congo,CD|Congo (DRC),CR|Costa Rica,CI|Cote d Ivoire,HR|Croatia,CU|Cuba,CY|Cyprus,CZ|Czechia,DK|Denmark,DJ|Djibouti,DM|Dominica,DO|Dominican Republic,EC|Ecuador,EG|Egypt,SV|El Salvador,GQ|Equatorial Guinea,ER|Eritrea,EE|Estonia,SZ|Eswatini,ET|Ethiopia,FJ|Fiji,FI|Finland,FR|France,GA|Gabon,GM|Gambia,GE|Georgia,DE|Germany,GH|Ghana,GR|Greece,GD|Grenada,GT|Guatemala,GN|Guinea,GW|Guinea-Bissau,GY|Guyana,HT|Haiti,HN|Honduras,HU|Hungary,IS|Iceland,IN|India,ID|Indonesia,IR|Iran,IQ|Iraq,IE|Ireland,IL|Israel,IT|Italy,JM|Jamaica,JP|Japan,JO|Jordan,KZ|Kazakhstan,KE|Kenya,KI|Kiribati,KP|North Korea,KR|South Korea,KW|Kuwait,KG|Kyrgyzstan,LA|Laos,LV|Latvia,LB|Lebanon,LS|Lesotho,LR|Liberia,LY|Libya,LI|Liechtenstein,LT|Lithuania,LU|Luxembourg,MG|Madagascar,MW|Malawi,MY|Malaysia,MV|Maldives,ML|Mali,MT|Malta,MH|Marshall Islands,MR|Mauritania,MU|Mauritius,MX|Mexico,FM|Micronesia,MD|Moldova,MC|Monaco,MN|Mongolia,ME|Montenegro,MA|Morocco,MZ|Mozambique,MM|Myanmar,NA|Namibia,NR|Nauru,NP|Nepal,NL|Netherlands,NZ|New Zealand,NI|Nicaragua,NE|Niger,NG|Nigeria,MK|North Macedonia,NO|Norway,OM|Oman,PK|Pakistan,PW|Palau,PS|Palestine,PA|Panama,PG|Papua New Guinea,PY|Paraguay,PE|Peru,PH|Philippines,PL|Poland,PT|Portugal,QA|Qatar,RO|Romania,RU|Russia,RW|Rwanda,KN|Saint Kitts and Nevis,LC|Saint Lucia,VC|Saint Vincent and the Grenadines,WS|Samoa,SM|San Marino,ST|Sao Tome and Principe,SA|Saudi Arabia,SN|Senegal,RS|Serbia,SC|Seychelles,SL|Sierra Leone,SG|Singapore,SK|Slovakia,SI|Slovenia,SB|Solomon Islands,SO|Somalia,ZA|South Africa,SS|South Sudan,ES|Spain,LK|Sri Lanka,SD|Sudan,SR|Suriname,SE|Sweden,CH|Switzerland,SY|Syria,TW|Taiwan,TJ|Tajikistan,TZ|Tanzania,TH|Thailand,TL|Timor-Leste,TG|Togo,TO|Tonga,TT|Trinidad and Tobago,TN|Tunisia,TR|Turkey,TM|Turkmenistan,TV|Tuvalu,UG|Uganda,UA|Ukraine,AE|United Arab Emirates,GB|United Kingdom,US|United States,UY|Uruguay,UZ|Uzbekistan,VU|Vanuatu,VA|Vatican City,VE|Venezuela,VN|Vietnam,YE|Yemen,ZM|Zambia,ZW|Zimbabwe';
@@ -41,7 +49,7 @@ const COUNTRY_RECORDS = (() => {
 })();
 
 const ALL_COUNTRY_OPTIONS = COUNTRY_RECORDS.map((country) => ({ value: country.name, label: country.name }));
-const DEFAULT_COUNTRY_BY_REGION = { US: 'United States', EU: 'Germany' };
+const DEFAULT_COUNTRY_BY_REGION = { US: 'United States', EU: 'Germany', GE: 'Georgia' };
 
 const CURRENCY_RECORDS = [
   { code: 'USD', name: 'US dollar', symbol: '$', countryCode: 'US' },
@@ -211,6 +219,13 @@ function nextInvoiceNumber(number, countryName) {
   return invoiceNumberForCountry(String(next).padStart(4, '0'), countryName);
 }
 
+function dueDateForTerms(terms, issueDate = '2026-05-30') {
+  const days = terms === 'Due on receipt' ? 0 : parseInt(String(terms || '').replace(/\D/g, ''), 10) || 0;
+  const due = new Date(issueDate);
+  due.setDate(due.getDate() + days);
+  return due.toISOString().slice(0, 10);
+}
+
 function fmtMoney(amount, region, opts = {}) {
   const r = REGIONS[region] || REGIONS.US;
   const currency = opts.currency ? currencyRecord(opts.currency) : null;
@@ -271,7 +286,7 @@ function freshInvoice(region, countryName) {
   return {
     number: invoiceNumberForCountry('0001', country),
     issueDate: '2026-05-30',
-    dueDate: region === 'EU' ? '2026-06-13' : '2026-06-29',
+    dueDate: dueDateForTerms(r.defaultTerms),
     currency,
     terms: r.defaultTerms,
     items: [{ desc: '', qty: 1, price: '', vat: r.defaultTaxRate }],
@@ -290,5 +305,5 @@ Object.assign(window, {
   freshInvoice, SUGGESTED_CLIENTS, COUNTRY_RECORDS, ALL_COUNTRY_OPTIONS,
   CURRENCY_RECORDS, CURRENCY_OPTIONS, currencyRecord, INVOICE_ACCENTS, invoiceAccentRecord, defaultCurrencyForCountry, paymentRailForCountry, flagUrlForCountryCode,
   defaultCountryForRegion, countryRecordFromName, invoicePrefixForCountry,
-  invoiceSequenceFromNumber, invoiceYearFromNumber, invoiceNumberForCountry, normalizeInvoiceNumberInput, invoiceNumberDetails, nextInvoiceNumber,
+  invoiceSequenceFromNumber, invoiceYearFromNumber, invoiceNumberForCountry, normalizeInvoiceNumberInput, invoiceNumberDetails, nextInvoiceNumber, dueDateForTerms,
 });
