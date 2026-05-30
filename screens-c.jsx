@@ -54,7 +54,7 @@ function InvoiceCommandCenter({ store, region, go }) {
   return (
     <div style={{ animation: 'fadeUp .35s ease both' }}>
       <ScreenHead eyebrow="Invoices" title="Local invoice workspace"
-        sub="This public MVP stores one working draft in your browser and exports a real PDF. Accounts, history and email delivery come later."
+        sub="This public MVP is a browser workspace: one working draft saved on this device, with real PDF export. Accounts, history and email delivery come later."
         right={<Button icon="plus" onClick={() => go('setup')}>New invoice</Button>} />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 14, marginBottom: 18 }}>
@@ -76,7 +76,7 @@ function InvoiceCommandCenter({ store, region, go }) {
               <span className="num" style={{ fontSize: 13.5, fontWeight: 560 }}>#{inv.number}</span>
               <span style={{ minWidth: 0 }}>
                 <span style={{ display: 'block', fontSize: 14, fontWeight: 560 }}>{c ? c.name : 'Client not added yet'}</span>
-                <span style={{ display: 'block', fontSize: 12, color: 'var(--muted)' }}>Local browser draft</span>
+                <span style={{ display: 'block', fontSize: 12, color: 'var(--muted)' }}>Browser workspace draft</span>
               </span>
               <StatusBadge status={canSend(store, region) ? 'Ready' : 'Draft'} />
               <span className="num" style={{ fontSize: 12.5, color: 'var(--muted)' }}>{inv.dueDate}</span>

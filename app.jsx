@@ -159,10 +159,10 @@ function Sidebar({ screen, go, region }) {
         </button>
         <Divider style={{ margin: '8px 0' }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 8px' }}>
-          <Monogram name="Local Workspace" size={34} tone={256} />
+          <Monogram name="Browser Workspace" size={34} tone={256} />
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 540, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Local workspace</div>
-            <div style={{ fontSize: 11.5, color: 'var(--muted)' }}>No sign-in required</div>
+            <div style={{ fontSize: 13, fontWeight: 540, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Browser workspace</div>
+            <div style={{ fontSize: 11.5, color: 'var(--muted)' }}>Saved on this device</div>
           </div>
         </div>
       </div>
@@ -208,8 +208,9 @@ function Topbar({ screen, go, region, setRegion, elapsedLive, onTour }) {
           title="Toggle region (demo)">
           <Icon name="globe" size={15} /> {REGIONS[region].code} · {region}
         </button>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '6px 11px', borderRadius: 'var(--r-pill)', border: '1px solid var(--line-2)', background: 'var(--surface)', fontSize: 12.5, fontWeight: 530, color: 'var(--ink-2)' }}>
-          <Icon name="shield" size={15} /> Local only
+        <span title="Your draft is stored in this browser. No account or cloud sync yet."
+          style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '6px 11px', borderRadius: 'var(--r-pill)', border: '1px solid var(--line-2)', background: 'var(--surface)', fontSize: 12.5, fontWeight: 530, color: 'var(--ink-2)' }}>
+          <Icon name="shield" size={15} /> Browser workspace
         </span>
         <button onClick={onTour}
           style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '6px 11px', borderRadius: 'var(--r-pill)', border: '1px solid var(--brand)', background: 'var(--brand-soft)', cursor: 'pointer', fontSize: 12.5, fontWeight: 560, color: 'var(--brand-strong)' }}>

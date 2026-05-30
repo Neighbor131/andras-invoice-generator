@@ -143,7 +143,7 @@ function DashboardEmpty({ go, region, emptyState, onTour }) {
   const paths = [
     { icon: 'invoice', title: 'Send your first invoice', desc: 'Get paid for work you’ve already done.', primary: true, cta: 'Start invoice' },
     { icon: 'download', title: 'Download a real PDF', desc: 'Export the finished invoice locally.', cta: 'Available after build', target: 'setup', locked: true },
-    { icon: 'shield', title: 'No account required', desc: 'Draft details stay in this browser.', cta: 'Local workspace', target: 'setup', locked: true },
+    { icon: 'shield', title: 'Browser workspace', desc: 'Saved on this device. No account or cloud sync.', cta: 'No sign-in', target: 'setup', locked: true },
   ];
 
   if (emptyState === 'tasks') {
@@ -203,8 +203,9 @@ function DashboardEmpty({ go, region, emptyState, onTour }) {
                 </div>
               ))}
             </div>
-            <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--muted)' }}>
-              <Icon name="shield" size={15} /> No account yet. Your draft is saved only in this browser.
+            <div style={{ marginTop: 18, padding: '12px 14px', display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 12.8, color: 'var(--muted)', background: 'var(--brand-softer)', border: '1px solid var(--brand-soft)', borderRadius: 'var(--r-md)', maxWidth: 430 }}>
+              <span style={{ color: 'var(--brand)', flex: 'none', marginTop: 1 }}><Icon name="shield" size={16} /></span>
+              <span><b style={{ color: 'var(--ink)', fontWeight: 580 }}>Browser workspace.</b> Your draft is saved on this device only. No account, no cloud sync.</span>
             </div>
           </div>
           {/* invoice glance */}
@@ -233,7 +234,7 @@ function DashboardEmpty({ go, region, emptyState, onTour }) {
       </Card>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginTop: 16, maxWidth: 880 }}>
-        {[['download', 'Real PDF export', 'Download and share yourself'], ['shield', 'Local workspace', 'No sign-in required'], ['globe', 'Country-aware setup', 'Prefixes, currency and tax defaults']].map(([ic, t, d]) => (
+        {[['download', 'Real PDF export', 'Download and share yourself'], ['shield', 'Browser workspace', 'Saved on this device'], ['globe', 'Country-aware setup', 'Prefixes, currency and tax defaults']].map(([ic, t, d]) => (
           <Card key={t} style={{ padding: '18px 18px', opacity: 0.92 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
               <span style={{ color: 'var(--brand)' }}><Icon name={ic} size={20} /></span>
@@ -448,7 +449,7 @@ function ClientAdd({ store, update, region, go }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', background: 'var(--brand-softer)', border: '1px solid var(--brand-soft)', borderRadius: 'var(--r-md)', marginBottom: 18, maxWidth: 680 }}>
         <span style={{ color: 'var(--brand)', flex: 'none' }}><Icon name="shield" size={18} /></span>
         <div style={{ fontSize: 13, color: 'var(--ink-2)', lineHeight: 1.45 }}>
-          <b style={{ color: 'var(--ink)', fontWeight: 580 }}>Local-only MVP.</b> Client details are used for the invoice PDF and saved only in this browser draft.
+          <b style={{ color: 'var(--ink)', fontWeight: 580 }}>Browser workspace.</b> Client details are used for the invoice PDF and saved on this device only.
         </div>
       </div>
 
