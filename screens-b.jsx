@@ -208,12 +208,13 @@ function createInvoiceCaptureLayer(node) {
   const layer = document.createElement('div');
   layer.setAttribute('aria-hidden', 'true');
   layer.style.cssText = [
-    'position:fixed',
+    'position:absolute',
     'left:0',
     'top:0',
     'width:794px',
-    'height:1123px',
-    'overflow:hidden',
+    'min-height:1123px',
+    'height:auto',
+    'overflow:visible',
     'background:#fff',
     'pointer-events:none',
     'z-index:2147483647',
@@ -222,6 +223,10 @@ function createInvoiceCaptureLayer(node) {
   layer.appendChild(node);
   document.body.appendChild(layer);
   return layer;
+}
+
+function invoiceCaptureHeight(node) {
+  return Math.max(1123, Math.ceil(node.scrollHeight || node.offsetHeight || 1123));
 }
 
 function promiseTimeout(ms, message) {
@@ -380,6 +385,7 @@ async function downloadInvoicePdf(store, region) {
         ]);
       }
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const captureHeight = invoiceCaptureHeight(node);
       await Promise.race([
         window.html2pdf()
         .set({
@@ -392,14 +398,14 @@ async function downloadInvoicePdf(store, region) {
             backgroundColor: '#ffffff',
             letterRendering: true,
             width: 794,
-            height: 1123,
+            height: captureHeight,
             windowWidth: 794,
-            windowHeight: 1123,
+            windowHeight: captureHeight,
             scrollX: 0,
             scrollY: 0,
           },
           jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' },
-          pagebreak: { mode: ['avoid-all', 'css'] },
+          pagebreak: { mode: ['css', 'legacy'] },
         })
         .from(node)
         .save(),
