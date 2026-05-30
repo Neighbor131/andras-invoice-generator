@@ -99,7 +99,7 @@ function buildInvoiceHtmlElement(store, region) {
       </tr>`;
 
   const node = document.createElement('div');
-  node.style.cssText = 'position:fixed;left:-12000px;top:0;width:794px;background:#fff;pointer-events:none;';
+  node.style.cssText = 'width:794px;min-height:1123px;background:#fff;pointer-events:none;';
   node.innerHTML = `
     <section style="width:794px;min-height:1123px;background:#fff;color:#1E2019;font-family:'Poppins',Arial,sans-serif;padding:0;box-sizing:border-box;">
       <div style="height:10px;background:${accent.hex};"></div>
@@ -193,6 +193,30 @@ function buildInvoiceHtmlElement(store, region) {
       </div>
     </section>`;
   return node;
+}
+
+function createInvoiceCaptureLayer(node) {
+  const layer = document.createElement('div');
+  layer.setAttribute('aria-hidden', 'true');
+  layer.style.cssText = [
+    'position:fixed',
+    'left:0',
+    'top:0',
+    'width:794px',
+    'height:1123px',
+    'overflow:hidden',
+    'background:#fff',
+    'pointer-events:none',
+    'z-index:2147483647',
+    'box-shadow:none',
+  ].join(';');
+  layer.appendChild(node);
+  document.body.appendChild(layer);
+  return layer;
+}
+
+function promiseTimeout(ms, message) {
+  return new Promise((_, reject) => setTimeout(() => reject(new Error(message)), ms));
 }
 
 function buildInvoicePdfPayload(store, region) {
@@ -337,27 +361,49 @@ async function downloadInvoicePdf(store, region) {
   const fileName = invoicePdfFileName(store);
   if (window.html2pdf) {
     const node = buildInvoiceHtmlElement(store, region);
-    document.body.appendChild(node);
+    const layer = createInvoiceCaptureLayer(node);
+    const cleanupTimer = setTimeout(() => layer.remove(), 15000);
     try {
-      if (document.fonts && document.fonts.ready) await document.fonts.ready;
-      await window.html2pdf()
+      if (document.fonts && document.fonts.ready) {
+        await Promise.race([
+          document.fonts.ready,
+          new Promise((resolve) => setTimeout(resolve, 1200)),
+        ]);
+      }
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      await Promise.race([
+        window.html2pdf()
         .set({
           margin: 0,
           filename: fileName,
           image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', letterRendering: true },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: '#ffffff',
+            letterRendering: true,
+            width: 794,
+            height: 1123,
+            windowWidth: 794,
+            windowHeight: 1123,
+            scrollX: 0,
+            scrollY: 0,
+          },
           jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' },
           pagebreak: { mode: ['avoid-all', 'css'] },
         })
         .from(node)
-        .save();
+        .save(),
+        promiseTimeout(12000, 'PDF render timed out'),
+      ]);
       window.lastInvoicePdfFilename = fileName;
       window.lastInvoicePdfRenderer = 'html2pdf-poppins';
       return fileName;
     } catch (error) {
       console.warn('Falling back to compact PDF export', error);
     } finally {
-      node.remove();
+      clearTimeout(cleanupTimer);
+      layer.remove();
     }
   } else {
     console.warn('HTML PDF renderer unavailable; using compact PDF export');
@@ -1011,4 +1057,7 @@ function Success({ store, region, go, resetFlow, elapsed }) {
   );
 }
 
-Object.assign(window, { ReadinessRail, InvoiceBuilder, CompletenessCheck, Preview, SendFlow, Success, Row, buildInvoicePdfPayload, downloadInvoicePdf });
+Object.assign(window, {
+  ReadinessRail, InvoiceBuilder, CompletenessCheck, Preview, SendFlow, Success, Row,
+  buildInvoicePdfPayload, buildInvoiceHtmlElement, createInvoiceCaptureLayer, downloadInvoicePdf,
+});

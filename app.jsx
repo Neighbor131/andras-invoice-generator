@@ -429,8 +429,8 @@ function App() {
     });
   };
 
-  const completeInvoice = async ({ download = false } = {}) => {
-    if (download) await downloadInvoicePdf(store, region);
+  const completeInvoice = ({ download = false } = {}) => {
+    if (download) downloadInvoicePdf(store, region);
     if (startTime) {
       const s = Math.floor((Date.now() - startTime) / 1000);
       setElapsed(`${Math.floor(s / 60)}m ${String(s % 60).padStart(2, '0')}s`);
