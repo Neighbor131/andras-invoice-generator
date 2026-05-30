@@ -8,6 +8,10 @@ function pdfEscape(value) {
   return String(value || '').replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)').replace(/[^\x09\x0A\x0D\x20-\x7E]/g, '-');
 }
 
+function htmlEscape(value) {
+  return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 function rgbForPdf(name, fallback) {
   const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
   const hex = value.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
@@ -57,6 +61,138 @@ function pdfJpegFromDataUrl(dataUrl) {
     i += 2 + Math.max(length, 2);
   }
   return width && height ? { binary, width, height } : null;
+}
+
+function invoicePdfFileName(store) {
+  const inv = (store && store.invoice) || {};
+  return `Invoice-${String(inv.number || 'draft').replace(/[^\w-]/g, '')}.pdf`;
+}
+
+function buildInvoiceHtmlElement(store, region) {
+  const r = REGIONS[region] || REGIONS.US;
+  const inv = store.invoice || freshInvoice(region);
+  const b = store.business || {};
+  const c = store.client || {};
+  const accent = invoiceAccentRecord(inv.accent);
+  const totals = computeTotals(inv, region);
+  const items = (inv.items || []).filter((item) => item.desc);
+  const taxRegistered = b.taxRegistered === true;
+  const paymentRail = paymentRailForCountry(b.country, region);
+  const methods = (b.methods || []).join(' / ');
+  const logo = b.logoData
+    ? `<img src="${b.logoData}" alt="" style="max-width:62px;max-height:48px;object-fit:contain;display:block;" />`
+    : `<div style="width:42px;height:42px;border-radius:14px;background:${accent.hex};color:#fff;display:grid;place-items:center;font-size:18px;font-weight:700;">${htmlEscape((b.name || 'A')[0].toUpperCase())}</div>`;
+  const itemRows = items.length ? items.map((item) => {
+    const desc = taxRegistered && Number(item.vat) > 0 ? `${item.desc} - ${r.taxName} ${item.vat}%` : item.desc;
+    return `
+      <tr>
+        <td style="padding:16px 0;border-bottom:1px solid #E1E8D5;vertical-align:top;">
+          <div style="font-weight:500;color:#1E2019;">${htmlEscape(desc)}</div>
+        </td>
+        <td style="padding:16px 0;border-bottom:1px solid #E1E8D5;vertical-align:top;text-align:right;color:#394032;">${htmlEscape(item.qty || 0)}</td>
+        <td style="padding:16px 0;border-bottom:1px solid #E1E8D5;vertical-align:top;text-align:right;color:#394032;">${htmlEscape(fmtMoney(item.price, region, { currency: inv.currency }))}</td>
+        <td style="padding:16px 0;border-bottom:1px solid #E1E8D5;vertical-align:top;text-align:right;font-weight:600;color:#1E2019;">${htmlEscape(fmtMoney(lineTotal(item), region, { currency: inv.currency }))}</td>
+      </tr>`;
+  }).join('') : `
+      <tr>
+        <td colspan="4" style="padding:28px 0;border-bottom:1px solid #E1E8D5;text-align:center;color:#9AA18D;">No line items yet</td>
+      </tr>`;
+
+  const node = document.createElement('div');
+  node.style.cssText = 'position:fixed;left:-12000px;top:0;width:794px;background:#fff;pointer-events:none;';
+  node.innerHTML = `
+    <section style="width:794px;min-height:1123px;background:#fff;color:#1E2019;font-family:'Poppins',Arial,sans-serif;padding:0;box-sizing:border-box;">
+      <div style="height:10px;background:${accent.hex};"></div>
+      <div style="padding:58px 64px 44px;box-sizing:border-box;">
+        <header style="display:flex;align-items:flex-start;justify-content:space-between;gap:32px;margin-bottom:46px;">
+          <div style="display:flex;align-items:center;gap:16px;min-width:0;">
+            ${logo}
+            <div>
+              <div style="font-size:15px;font-weight:600;letter-spacing:-.01em;color:#1E2019;">${htmlEscape(b.name || 'Your business')}</div>
+              <div style="font-size:11px;line-height:1.45;color:#69705F;margin-top:4px;max-width:250px;">${htmlEscape(b.address || 'Business address')}</div>
+            </div>
+          </div>
+          <div style="text-align:right;min-width:180px;">
+            <div style="font-size:36px;line-height:1;font-weight:650;letter-spacing:-.03em;color:#1E2019;">Invoice</div>
+            <div style="margin-top:12px;font-size:12px;font-weight:600;color:${accent.hex};letter-spacing:.08em;text-transform:uppercase;">#${htmlEscape(inv.number || 'draft')}</div>
+          </div>
+        </header>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:34px;margin-bottom:40px;">
+          <div style="border-top:1px solid #D0DBC2;padding-top:18px;">
+            <div style="font-size:10px;font-weight:700;color:#69705F;letter-spacing:.14em;text-transform:uppercase;margin-bottom:12px;">Billed to</div>
+            <div style="font-size:17px;font-weight:600;letter-spacing:-.01em;">${htmlEscape(c.name || 'Client name')}</div>
+            <div style="font-size:12px;line-height:1.65;color:#69705F;margin-top:6px;">
+              ${htmlEscape([c.company, c.email, c.address].filter(Boolean).join(' • ') || 'Client details')}
+            </div>
+          </div>
+          <div style="border-top:1px solid #D0DBC2;padding-top:18px;">
+            <div style="display:grid;grid-template-columns:1fr auto;gap:9px;font-size:12px;color:#69705F;">
+              <span>Issued</span><strong style="color:#1E2019;font-weight:500;">${htmlEscape(inv.issueDate || '-')}</strong>
+              <span>Due</span><strong style="color:#1E2019;font-weight:600;">${htmlEscape(inv.dueDate || '-')}</strong>
+              <span>Terms</span><strong style="color:#1E2019;font-weight:500;">${htmlEscape(inv.terms || '-')}</strong>
+              <span>Currency</span><strong style="color:#1E2019;font-weight:500;">${htmlEscape(inv.currency || r.code)}</strong>
+            </div>
+          </div>
+        </div>
+
+        <table style="width:100%;border-collapse:collapse;margin-bottom:28px;font-size:12px;">
+          <thead>
+            <tr>
+              <th style="text-align:left;padding:0 0 12px;border-bottom:2px solid #1E2019;font-size:10px;color:#69705F;letter-spacing:.13em;text-transform:uppercase;">Description</th>
+              <th style="text-align:right;padding:0 0 12px;border-bottom:2px solid #1E2019;font-size:10px;color:#69705F;letter-spacing:.13em;text-transform:uppercase;width:58px;">Qty</th>
+              <th style="text-align:right;padding:0 0 12px;border-bottom:2px solid #1E2019;font-size:10px;color:#69705F;letter-spacing:.13em;text-transform:uppercase;width:112px;">Price</th>
+              <th style="text-align:right;padding:0 0 12px;border-bottom:2px solid #1E2019;font-size:10px;color:#69705F;letter-spacing:.13em;text-transform:uppercase;width:120px;">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemRows}
+          </tbody>
+        </table>
+
+        <div style="display:flex;justify-content:flex-end;margin-bottom:36px;">
+          <div style="width:270px;">
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:#69705F;margin-bottom:10px;">
+              <span>Subtotal</span><span style="color:#1E2019;font-weight:500;">${htmlEscape(fmtMoney(totals.subtotal, region, { currency: inv.currency }))}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:#69705F;margin-bottom:14px;">
+              <span>${htmlEscape(r.taxName)}</span><span style="color:#1E2019;font-weight:500;">${htmlEscape(taxRegistered ? fmtMoney(totals.tax, region, { currency: inv.currency }) : 'Not applicable')}</span>
+            </div>
+            <div style="height:1px;background:#D0DBC2;margin-bottom:16px;"></div>
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:18px;">
+              <span style="font-size:14px;font-weight:600;color:#1E2019;">Total due</span>
+              <span style="font-size:24px;font-weight:700;letter-spacing:-.025em;color:${accent.hex};">${htmlEscape(fmtMoney(totals.total, region, { currency: inv.currency }))}</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1.2fr .8fr;gap:18px;margin-top:24px;">
+          <div style="background:#F3F6EB;border:1px solid #E1E8D5;border-radius:18px;padding:22px 24px;">
+            <div style="font-size:10px;font-weight:700;color:${accent.hex};letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px;">Payment details</div>
+            <div style="font-size:14px;font-weight:600;color:#1E2019;">Pay to ${htmlEscape(b.accountName || b.name || 'your account')}</div>
+            <div style="font-size:12px;line-height:1.55;color:#69705F;margin-top:8px;">${htmlEscape(paymentRail.label)}: ${htmlEscape(b.iban || '-')}</div>
+            ${taxRegistered ? `<div style="font-size:12px;color:#69705F;margin-top:3px;">${htmlEscape(r.taxIdName)}: ${htmlEscape(b.taxId || '-')}</div>` : ''}
+          </div>
+          <div style="background:#fff;border:1px solid #E1E8D5;border-radius:18px;padding:22px 24px;">
+            <div style="font-size:10px;font-weight:700;color:#69705F;letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px;">Accepted methods</div>
+            <div style="font-size:13px;line-height:1.55;color:#394032;">${htmlEscape(methods || 'Bank transfer')}</div>
+            ${inv.paymentLink ? `<div style="margin-top:12px;font-size:11px;font-weight:600;color:${accent.hex};">Payment instructions included</div>` : ''}
+          </div>
+        </div>
+
+        ${inv.notes ? `
+          <div style="margin-top:28px;border-top:1px solid #E1E8D5;padding-top:18px;">
+            <div style="font-size:10px;font-weight:700;color:#69705F;letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px;">Notes</div>
+            <div style="font-size:12px;line-height:1.65;color:#394032;">${htmlEscape(inv.notes)}</div>
+          </div>` : ''}
+
+        <footer style="display:flex;justify-content:space-between;align-items:center;margin-top:46px;padding-top:16px;border-top:1px solid #E1E8D5;font-size:10.5px;color:#69705F;">
+          <span>Generated by Andras</span>
+          <span>${htmlEscape(r.code)} · ${htmlEscape(inv.currency || r.code)}</span>
+        </footer>
+      </div>
+    </section>`;
+  return node;
 }
 
 function buildInvoicePdfPayload(store, region) {
@@ -193,12 +329,41 @@ function buildInvoicePdfPayload(store, region) {
   offsets.slice(1).forEach((offset) => { pdf += `${String(offset).padStart(10, '0')} 00000 n \n`; });
   pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefAt}\n%%EOF`;
 
-  const fileName = `Invoice-${String(inv.number || 'draft').replace(/[^\w-]/g, '')}.pdf`;
+  const fileName = invoicePdfFileName(store);
   return { fileName, pdf };
 }
 
-function downloadInvoicePdf(store, region) {
-  const { fileName, pdf } = buildInvoicePdfPayload(store, region);
+async function downloadInvoicePdf(store, region) {
+  const fileName = invoicePdfFileName(store);
+  if (window.html2pdf) {
+    const node = buildInvoiceHtmlElement(store, region);
+    document.body.appendChild(node);
+    try {
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+      await window.html2pdf()
+        .set({
+          margin: 0,
+          filename: fileName,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', letterRendering: true },
+          jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' },
+          pagebreak: { mode: ['avoid-all', 'css'] },
+        })
+        .from(node)
+        .save();
+      window.lastInvoicePdfFilename = fileName;
+      window.lastInvoicePdfRenderer = 'html2pdf-poppins';
+      return fileName;
+    } catch (error) {
+      console.warn('Falling back to compact PDF export', error);
+    } finally {
+      node.remove();
+    }
+  } else {
+    console.warn('HTML PDF renderer unavailable; using compact PDF export');
+  }
+
+  const { pdf } = buildInvoicePdfPayload(store, region);
   const blob = new Blob([pdf], { type: 'application/pdf' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -210,6 +375,7 @@ function downloadInvoicePdf(store, region) {
   setTimeout(() => URL.revokeObjectURL(url), 1500);
   window.lastInvoicePdfFilename = fileName;
   window.lastInvoicePdfBytes = pdf.length;
+  window.lastInvoicePdfRenderer = 'fallback';
   return fileName;
 }
 
@@ -218,16 +384,14 @@ function pdfToBase64(pdf) {
 }
 
 function PdfDownloadLink({ store, region, children = 'PDF', size = 'md', full, style }) {
-  const payload = buildInvoicePdfPayload(store, region);
-  const href = `data:application/pdf;base64,${pdfToBase64(payload.pdf)}`;
   const sizeMap = {
     sm: { h: 34, fs: 13.5, px: 12 },
     md: { h: 42, fs: 14.5, px: 17 },
     lg: { h: 50, fs: 16, px: 24 },
   }[size] || { h: 42, fs: 14.5, px: 17 };
   return (
-    <a href={href} download={payload.fileName}
-      onClick={() => { window.lastInvoicePdfFilename = payload.fileName; window.lastInvoicePdfBytes = payload.pdf.length; }}
+    <a href="#download-pdf" role="button"
+      onClick={async (event) => { event.preventDefault(); await downloadInvoicePdf(store, region); }}
       style={{
         height: sizeMap.h, padding: `0 ${sizeMap.px}px`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7,
         width: full ? '100%' : 'auto',

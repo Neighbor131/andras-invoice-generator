@@ -57,7 +57,7 @@
   --sh-4: 0 18px 50px rgb(30 32 25 / 0.16), 0 6px 16px rgb(30 32 25 / 0.08);
 
   /* --- Type --- */
-  --font-ui: 'Schibsted Grotesk', system-ui, -apple-system, sans-serif;
+  --font-ui: 'Poppins', system-ui, -apple-system, sans-serif;
   --font-num: 'IBM Plex Mono', ui-monospace, monospace;
 
   /* --- Density (overridden by [data-density]) --- */

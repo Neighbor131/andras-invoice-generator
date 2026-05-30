@@ -378,9 +378,7 @@ function App() {
     const root = document.documentElement;
     root.setAttribute('data-density', t.density);
     root.setAttribute('data-accent', t.accent);
-    root.style.setProperty('--font-ui', t.fontPair === 'humanist'
-      ? "'Hanken Grotesk', system-ui, sans-serif"
-      : "'Schibsted Grotesk', system-ui, sans-serif");
+    root.style.setProperty('--font-ui', "'Poppins', system-ui, sans-serif");
   }, [t.density, t.accent, t.fontPair]);
 
   // live timer
@@ -431,8 +429,8 @@ function App() {
     });
   };
 
-  const completeInvoice = ({ download = false } = {}) => {
-    if (download) downloadInvoicePdf(store, region);
+  const completeInvoice = async ({ download = false } = {}) => {
+    if (download) await downloadInvoicePdf(store, region);
     if (startTime) {
       const s = Math.floor((Date.now() - startTime) / 1000);
       setElapsed(`${Math.floor(s / 60)}m ${String(s % 60).padStart(2, '0')}s`);
