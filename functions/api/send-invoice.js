@@ -31,9 +31,9 @@ export async function onRequestOptions() {
 }
 
 export async function onRequestPost({ request, env }) {
-  if (!env.RESEND_API_KEY || !env.FROM_EMAIL) {
+  if (!env.BREVO_API_KEY || !env.FROM_EMAIL) {
     return json({
-      error: 'Email is not configured yet. Add RESEND_API_KEY and FROM_EMAIL in Cloudflare Pages environment variables.',
+      error: 'Email is not configured yet. Add BREVO_API_KEY and FROM_EMAIL in Cloudflare Pages environment variables.',
     }, 503);
   }
 
@@ -57,32 +57,41 @@ export async function onRequestPost({ request, env }) {
   if (!subject || !message || !pdfBase64) return json({ error: 'Subject, message and PDF are required.' }, 400);
   if (pdfBase64.length > 8_000_000) return json({ error: 'PDF attachment is too large for this MVP sender.' }, 413);
 
-  const resendPayload = {
-    from: env.FROM_EMAIL,
-    to: [to],
-    reply_to: replyTo,
-    subject,
-    text: message,
-    html: textToHtml(message),
-    attachments: [
+  const fromName = String(env.FROM_NAME || 'Andras').trim();
+  const brevoPayload = {
+    sender: {
+      name: fromName,
+      email: env.FROM_EMAIL,
+    },
+    to: [
       {
-        filename: fileName,
+        email: to,
+        name: String(body.clientName || '').trim() || undefined,
+      },
+    ],
+    replyTo: {
+      email: replyTo,
+      name: businessName,
+    },
+    subject,
+    textContent: message,
+    htmlContent: textToHtml(message),
+    attachment: [
+      {
+        name: fileName,
         content: pdfBase64,
       },
     ],
-    tags: [
-      { name: 'product', value: 'andras' },
-      { name: 'type', value: 'invoice' },
-    ],
+    tags: ['andras', 'invoice'],
   };
 
-  const response = await fetch('https://api.resend.com/emails', {
+  const response = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${env.RESEND_API_KEY}`,
+      'api-key': env.BREVO_API_KEY,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(resendPayload),
+    body: JSON.stringify(brevoPayload),
   });
 
   const result = await response.json().catch(() => ({}));
@@ -92,7 +101,7 @@ export async function onRequestPost({ request, env }) {
 
   return json({
     ok: true,
-    id: result.id,
+    id: result.messageId || result.id,
     to,
     replyTo,
     businessName,
