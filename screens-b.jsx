@@ -208,7 +208,7 @@ function createInvoiceCaptureLayer(node) {
   const layer = document.createElement('div');
   layer.setAttribute('aria-hidden', 'true');
   layer.style.cssText = [
-    'position:absolute',
+    'position:fixed',
     'left:0',
     'top:0',
     'width:794px',
@@ -227,6 +227,73 @@ function createInvoiceCaptureLayer(node) {
 
 function invoiceCaptureHeight(node) {
   return Math.max(1123, Math.ceil(node.scrollHeight || node.offsetHeight || 1123));
+}
+
+function trimCanvasBottomWhitespace(canvas) {
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  if (!ctx) return canvas;
+  const { width, height } = canvas;
+  const pixels = ctx.getImageData(0, 0, width, height).data;
+  let bottom = height - 1;
+  const isInk = (idx) => pixels[idx + 3] > 0 && (pixels[idx] < 248 || pixels[idx + 1] < 248 || pixels[idx + 2] < 248);
+  outer:
+  for (; bottom >= 0; bottom -= 1) {
+    for (let x = 0; x < width; x += 8) {
+      if (isInk((bottom * width + x) * 4)) break outer;
+    }
+  }
+  const pageHeightAtA4 = Math.round(width * (841.89 / 595.28));
+  const targetHeight = Math.min(height, Math.max(pageHeightAtA4, bottom + 48));
+  if (targetHeight >= height - 8) return canvas;
+  const trimmed = document.createElement('canvas');
+  trimmed.width = width;
+  trimmed.height = targetHeight;
+  const trimmedCtx = trimmed.getContext('2d');
+  trimmedCtx.fillStyle = '#ffffff';
+  trimmedCtx.fillRect(0, 0, trimmed.width, trimmed.height);
+  trimmedCtx.drawImage(canvas, 0, 0);
+  return trimmed;
+}
+
+async function downloadInvoicePdfFromCanvas(node, fileName, captureHeight) {
+  if (!window.html2canvas || !window.jspdf || !window.jspdf.jsPDF) {
+    throw new Error('Canvas PDF renderer unavailable');
+  }
+  const canvas = await window.html2canvas(node, {
+    scale: 2,
+    useCORS: true,
+    allowTaint: false,
+    backgroundColor: '#ffffff',
+    letterRendering: true,
+    width: 794,
+    height: captureHeight,
+    windowWidth: 794,
+    windowHeight: captureHeight,
+    x: 0,
+    y: 0,
+    scrollX: 0,
+    scrollY: 0,
+  });
+  const source = trimCanvasBottomWhitespace(canvas);
+  const pdf = new window.jspdf.jsPDF({ unit: 'pt', format: 'a4', orientation: 'portrait', compress: true });
+  const pageW = pdf.internal.pageSize.getWidth();
+  const pageH = pdf.internal.pageSize.getHeight();
+  const sliceHeight = Math.floor(source.width * (pageH / pageW));
+  let offsetY = 0;
+  while (offsetY < source.height) {
+    const currentSliceHeight = Math.min(sliceHeight, source.height - offsetY);
+    const pageCanvas = document.createElement('canvas');
+    pageCanvas.width = source.width;
+    pageCanvas.height = currentSliceHeight;
+    const pageCtx = pageCanvas.getContext('2d');
+    pageCtx.fillStyle = '#ffffff';
+    pageCtx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+    pageCtx.drawImage(source, 0, offsetY, source.width, currentSliceHeight, 0, 0, source.width, currentSliceHeight);
+    if (offsetY > 0) pdf.addPage('a4', 'portrait');
+    pdf.addImage(pageCanvas.toDataURL('image/jpeg', 0.98), 'JPEG', 0, 0, pageW, currentSliceHeight * (pageW / source.width), undefined, 'FAST');
+    offsetY += currentSliceHeight;
+  }
+  pdf.save(fileName);
 }
 
 function promiseTimeout(ms, message) {
@@ -386,6 +453,15 @@ async function downloadInvoicePdf(store, region) {
       }
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       const captureHeight = invoiceCaptureHeight(node);
+      if (window.html2canvas && window.jspdf && window.jspdf.jsPDF) {
+        await Promise.race([
+          downloadInvoicePdfFromCanvas(node, fileName, captureHeight),
+          promiseTimeout(12000, 'PDF render timed out'),
+        ]);
+        window.lastInvoicePdfFilename = fileName;
+        window.lastInvoicePdfRenderer = 'canvas-jsPDF';
+        return fileName;
+      }
       await Promise.race([
         window.html2pdf()
         .set({
