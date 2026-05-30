@@ -260,6 +260,10 @@ function paymentRailForCountry(countryName, region) {
 }
 
 function flagUrlForCountryCode(countryCode) {
+  if (String(countryCode || '').toUpperCase() === 'EU') {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="32" fill="#1f4fa3"/><g fill="#ffcc00" transform="translate(32 32)"><g id="s"><path d="M0-22l1.35 4.14h4.35l-3.52 2.56 1.34 4.14L0-13.72l-3.52 2.56 1.34-4.14-3.52-2.56h4.35z"/></g><use href="#s" transform="rotate(30)"/><use href="#s" transform="rotate(60)"/><use href="#s" transform="rotate(90)"/><use href="#s" transform="rotate(120)"/><use href="#s" transform="rotate(150)"/><use href="#s" transform="rotate(180)"/><use href="#s" transform="rotate(210)"/><use href="#s" transform="rotate(240)"/><use href="#s" transform="rotate(270)"/><use href="#s" transform="rotate(300)"/><use href="#s" transform="rotate(330)"/></g></svg>`;
+    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  }
   const code = String(countryCode || 'US').toLowerCase();
   return `https://cdn.jsdelivr.net/gh/HatScripts/circle-flags/flags/${code}.svg`;
 }

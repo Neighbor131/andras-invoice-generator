@@ -462,12 +462,15 @@ function PdfDownloadLink({ store, region, children = 'PDF', size = 'md', full, s
 function CurrencyPicker({ value, onChange }) {
   const [open, setOpen] = useStateB(false);
   const selected = currencyRecord(value);
+  const hideBrokenFlag = (event) => {
+    event.currentTarget.style.visibility = 'hidden';
+  };
   return (
     <div style={{ position: 'relative' }}>
       <button onClick={() => setOpen(!open)}
         style={{ width: '100%', height: 'var(--d-control)', borderRadius: 'var(--r-sm)', border: '1px solid var(--line-2)', background: 'var(--surface)',
           display: 'flex', alignItems: 'center', gap: 10, padding: '0 12px', cursor: 'pointer', fontSize: 14.5, color: 'var(--ink)' }}>
-        <img src={flagUrlForCountryCode(selected.countryCode)} alt="" style={{ width: 24, height: 24, borderRadius: 99, flex: 'none' }} />
+        <img src={flagUrlForCountryCode(selected.countryCode)} alt="" onError={hideBrokenFlag} style={{ width: 24, height: 24, borderRadius: 99, flex: 'none' }} />
         <span style={{ flex: 1, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selected.name}</span>
         <span className="num" style={{ color: 'var(--muted)' }}>{selected.code}</span>
         <Icon name="chevDown" size={16} />
@@ -478,7 +481,7 @@ function CurrencyPicker({ value, onChange }) {
           {CURRENCY_RECORDS.map((currency) => (
             <button key={currency.code} onClick={() => { onChange(currency.code); setOpen(false); }}
               style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', border: 'none', borderRadius: 'var(--r-sm)', background: currency.code === value ? 'var(--brand-softer)' : 'transparent', cursor: 'pointer', textAlign: 'left' }}>
-              <img src={flagUrlForCountryCode(currency.countryCode)} alt="" style={{ width: 24, height: 24, borderRadius: 99, flex: 'none' }} />
+              <img src={flagUrlForCountryCode(currency.countryCode)} alt="" onError={hideBrokenFlag} style={{ width: 24, height: 24, borderRadius: 99, flex: 'none' }} />
               <span style={{ flex: 1, fontSize: 13.5, fontWeight: 540 }}>{currency.name}</span>
               <span className="num" style={{ fontSize: 12.5, color: 'var(--muted)' }}>{currency.code}</span>
             </button>
