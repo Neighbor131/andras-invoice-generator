@@ -87,11 +87,12 @@ function buildInvoiceHtmlElement(store, region) {
   const items = (inv.items || []).filter((item) => item.desc);
   const taxRegistered = b.taxRegistered === true;
   const paymentRail = paymentRailForCountry(b.country, region);
+  const logoSource = b.logoPdfData || b.logoData;
   const bankIcon = `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="${accent.hex}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 5l9 5.5"/><path d="M5 10.5h14"/><path d="M6.5 10.5v6"/><path d="M10.5 10.5v6"/><path d="M13.5 10.5v6"/><path d="M17.5 10.5v6"/><path d="M4.5 16.5h15"/><path d="M3.5 19h17"/></svg>`;
   const linkIcon = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#384D48" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.07 0l2.12-2.12a5 5 0 0 0-7.07-7.07L10.9 5.03"/><path d="M14 11a5 5 0 0 0-7.07 0L4.81 13.12a5 5 0 0 0 7.07 7.07l1.22-1.22"/></svg>`;
-  const logo = b.logoData
-    ? `<span style="width:54px;height:44px;border-radius:10px;background:#F3F6EB;border:1px solid #DCE8D1;display:grid;place-items:center;overflow:hidden;flex:none;"><img src="${b.logoData}" alt="" style="max-width:100%;max-height:100%;object-fit:contain;display:block;" /></span>`
-    : `<div style="width:44px;height:44px;border-radius:10px;background:${accent.hex};color:#fff;display:grid;place-items:center;font-size:22px;font-weight:700;flex:none;">${htmlEscape((b.name || 'A')[0].toUpperCase())}</div>`;
+  const logo = logoSource
+    ? `<span style="width:54px;height:44px;border-radius:10px;background:#F3F6EB;border:1px solid #DCE8D1;display:grid;place-items:center;overflow:hidden;flex:none;"><img src="${logoSource}" alt="" style="max-width:100%;max-height:100%;object-fit:contain;display:block;" /></span>`
+    : `<span style="width:44px;height:44px;display:grid;place-items:center;flex:none;"><img src="assets/andras-logo.png" alt="" style="width:26px;height:26px;object-fit:contain;display:block;" /></span>`;
   const itemRows = items.length ? items.map((item) => {
     const desc = taxRegistered && Number(item.vat) > 0 ? `${item.desc} - ${r.taxName} ${item.vat}%` : item.desc;
     return `
@@ -216,6 +217,21 @@ function createInvoiceCaptureLayer(node) {
 
 function invoiceCaptureHeight(node) {
   return Math.max(1123, Math.ceil(node.scrollHeight || node.offsetHeight || 1123));
+}
+
+async function waitForInvoiceAssets(node) {
+  const images = Array.from(node.querySelectorAll('img'));
+  await Promise.all(images.map((img) => {
+    if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+    if (img.decode) {
+      return img.decode().catch(() => {});
+    }
+    return new Promise((resolve) => {
+      img.onload = resolve;
+      img.onerror = resolve;
+      setTimeout(resolve, 1000);
+    });
+  }));
 }
 
 function promiseTimeout(ms, message) {
@@ -373,6 +389,7 @@ async function downloadInvoicePdf(store, region) {
           new Promise((resolve) => setTimeout(resolve, 1200)),
         ]);
       }
+      await waitForInvoiceAssets(node);
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       const captureHeight = invoiceCaptureHeight(node);
       layer.style.height = `${captureHeight}px`;
