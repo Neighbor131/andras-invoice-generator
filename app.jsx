@@ -30,8 +30,8 @@ const CASE_NOTES = {
   build:     { metric: 'Validation error rate', body: 'The live Readiness rail surfaces issues as they happen, not at the end. Errors get fixed in context before they ever become a failed send.' },
   check:     { metric: 'First invoice send rate · Validation error rate', body: 'A correctness gate that’s helpful, not punishing: every blocker links to its fix. We separate must-fix (block) from worth-a-look (warn).' },
   preview:   { metric: 'Invoice edit / reopen rate', body: 'Edit hotspots let users correct in place instead of restarting. Confidence here reduces post-send reopens and credit notes.' },
-  send:      { metric: 'Email send rate · PDF fallback', body: 'The MVP can send through a verified transactional sender, while keeping PDF download as the no-config fallback.' },
-  success:   { metric: 'Time to first invoice (closed)', body: 'The flow closes once the invoice is emailed or downloaded, with replies routed back to the business owner.' },
+  send:      { metric: 'PDF download rate', body: 'The MVP closes with a real PDF export. Users can attach it anywhere without account or sender-domain setup.' },
+  success:   { metric: 'Time to first invoice (closed)', body: 'The flow closes once the invoice PDF is ready, with a simple path to download or start another draft.' },
 };
 
 const TOUR_STEPS = [
@@ -68,8 +68,8 @@ const TOUR_STEPS = [
   {
     screen: 'send',
     icon: 'mail',
-    title: 'Send or download',
-    body: 'The final step emails the PDF through Andras when configured, or lets users download the invoice as a fallback.',
+    title: 'Download the PDF',
+    body: 'The final step produces the invoice file. No email provider, domain, or account setup is required.',
   },
 ];
 
@@ -241,7 +241,7 @@ const LOCAL_STORE_KEY = 'andras.invoice.local.v1';
 function createInitialStore(region) {
   const country = defaultCountryForRegion(region);
   return {
-    business: { name: '', email: '', type: 'Sole proprietor / freelancer', country, logo: false, logoData: '', logoPdfData: '', logoName: '', logoError: '', taxRegistered: undefined, taxId: '', address: '', accountName: '', iban: '', bankFilled: false, methods: ['Card'] },
+    business: { name: '', type: 'Sole proprietor / freelancer', country, logo: false, logoData: '', logoPdfData: '', logoName: '', logoError: '', taxRegistered: undefined, taxId: '', address: '', accountName: '', iban: '', bankFilled: false, methods: ['Card'] },
     client: null,
     invoice: freshInvoice(region, country),
     numberClash: false,

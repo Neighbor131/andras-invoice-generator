@@ -232,7 +232,7 @@ function computeChecks(store, region) {
   const hasRealItem = items.some((i) => i.desc && (Number(i.qty) || 0) > 0 && (Number(i.price) || 0) > 0);
   const numberInfo = invoiceNumberDetails(inv.number, b.country || defaultCountryForRegion(region));
   const checks = [
-    { id: 'biz', label: 'Business profile & reply-to email', detail: 'Shown on the invoice and used for client replies', ok: !!(b.name && b.email && b.address), severity: 'block', step: 'setup' },
+    { id: 'biz', label: 'Business name & address', detail: 'Shown on the invoice header', ok: !!(b.name && b.address), severity: 'block', step: 'setup' },
     { id: 'tax', label: `${r.taxIdName} / tax status`, detail: b.taxRegistered ? `Registered — ${r.taxName} will be applied` : 'Marked not registered', ok: !!(b.taxRegistered === false || b.taxId), severity: 'warn', step: 'setup' },
     { id: 'bank', label: `Payment details (${paymentRail.label})`, detail: 'So the client knows where to pay', ok: !!(b.accountName && b.iban), severity: 'block', step: 'setup' },
     { id: 'client', label: 'Client & email', detail: c ? `${c.name} · ${c.email}` : 'No client selected', ok: !!(c && c.email), severity: 'block', step: 'client' },

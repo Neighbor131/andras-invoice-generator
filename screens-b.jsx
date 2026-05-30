@@ -698,55 +698,15 @@ function Preview({ store, region, go }) {
 function SendFlow({ store, update, region, go, onSend }) {
   const r = REGIONS[region];
   const inv = store.invoice, c = store.client || {};
-  const [sendState, setSendState] = useStateB({ status: 'idle', message: '' });
   const totals = computeTotals(inv, region);
   const setInv = (patch) => update({ invoice: { ...store.invoice, ...patch } });
-  const subject = inv.emailSubject || `Invoice #${inv.number} from ${store.business.name || 'Andras'} — ${fmtMoney(totals.total, region, { currency: inv.currency })} due`;
-  const body = inv.emailBody || `Hi ${(c.name || '').split(' ')[0] || 'there'},\n\n${store.business.name || 'Your vendor'} has sent you invoice #${inv.number} for ${fmtMoney(totals.total, region, { currency: inv.currency })}, due ${inv.dueDate}.\n\nThe invoice PDF is attached. Payment details are included in the invoice.\n\nThank you,\n${store.business.name || ''}\n\nSent with Andras. Reply directly to this email to contact ${store.business.name || 'the sender'}.`;
-  const canEmail = !!(c.email && store.business.email && canSend(store, region));
-
-  const sendInvoiceEmail = async () => {
-    setSendState({ status: 'sending', message: 'Sending invoice email…' });
-    try {
-      const payload = buildInvoicePdfPayload(store, region);
-      const response = await fetch('/api/send-invoice', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: c.email,
-          clientName: c.name,
-          replyTo: store.business.email,
-          businessName: store.business.name,
-          subject,
-          message: body,
-          invoiceNumber: inv.number,
-          fileName: payload.fileName,
-          pdfBase64: pdfToBase64(payload.pdf),
-        }),
-      });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(result.error || 'Email could not be sent.');
-      }
-      update({ invoice: { ...store.invoice, emailSent: true } });
-      setSendState({ status: 'sent', message: `Invoice emailed to ${c.email}.` });
-      onSend();
-    } catch (error) {
-      setSendState({ status: 'error', message: error.message || 'Email could not be sent. Download the PDF instead.' });
-    }
-  };
 
   return (
     <div style={{ animation: 'fadeUp .35s ease both' }}>
-      <ScreenHead eyebrow="Finish" title="Send or download your invoice" sub="Andras can email the PDF from a verified sender, with replies going back to your business email." />
+      <ScreenHead eyebrow="Finish" title="Download your invoice" sub="Andras prepares a real PDF you can save, print, or attach to any email client." />
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 320px', gap: 22, alignItems: 'start' }}>
         <Card>
           <div style={{ display: 'grid', gap: 14 }}>
-            <Field label="To"><Input value={c.email} onChange={() => {}} prefix={<Icon name="mail" size={16} />} /></Field>
-            <Field label="Reply-to"><Input value={store.business.email || ''} onChange={() => {}} prefix={<Icon name="mail" size={16} />} /></Field>
-            <Field label="Subject"><Input value={subject} onChange={(v) => setInv({ emailSubject: v })} /></Field>
-            <Field label="Message"><Textarea value={body} onChange={(v) => setInv({ emailBody: v })} rows={7} /></Field>
-            <Divider />
             <div style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '12px 14px', background: 'var(--surface-2)', borderRadius: 'var(--r-md)' }}>
               <span style={{ width: 40, height: 40, borderRadius: 8, background: 'var(--bad-soft)', color: 'var(--bad)', display: 'grid', placeItems: 'center', flex: 'none' }}><Icon name="doc" size={20} /></span>
               <div style={{ flex: 1 }}>
@@ -755,6 +715,17 @@ function SendFlow({ store, update, region, go, onSend }) {
               </div>
               <Badge tone="ok" size="sm" icon="checkSmall">Attached</Badge>
               <PdfDownloadLink store={store} region={region} size="sm">PDF</PdfDownloadLink>
+            </div>
+            <div style={{ padding: '16px 18px', borderRadius: 'var(--r-md)', border: '1px solid var(--line)', background: 'var(--surface)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
+                <Row l="Invoice" v={`#${inv.number}`} />
+                <Row l="Client" v={c.name || 'Client'} />
+                <Row l="Due date" v={inv.dueDate} />
+                <Row l="Total" v={fmtMoney(totals.total, region, { currency: inv.currency })} />
+              </div>
+              <div style={{ fontSize: 12.5, color: 'var(--muted)', lineHeight: 1.5 }}>
+                The PDF includes your business details, client details, line items, tax, total, notes and payment instructions.
+              </div>
             </div>
           </div>
         </Card>
@@ -774,23 +745,11 @@ function SendFlow({ store, update, region, go, onSend }) {
               <span className="num" style={{ fontSize: 20, fontWeight: 600, color: 'var(--brand)' }}>{fmtMoney(totals.total, region, { currency: inv.currency })}</span>
             </div>
             <div className="num" style={{ fontSize: 11.5, color: 'var(--muted)', marginBottom: 14 }}>to {c.name} · due {inv.dueDate}</div>
-            <Button full size="lg" icon="mail" onClick={sendInvoiceEmail} disabled={!canEmail || sendState.status === 'sending'}>
-              {sendState.status === 'sending' ? 'Sending…' : 'Send invoice email'}
-            </Button>
-            <PdfDownloadLink store={store} region={region} full size="lg" style={{ marginTop: 10 }}>Download PDF</PdfDownloadLink>
+            <PdfDownloadLink store={store} region={region} full size="lg">Download PDF</PdfDownloadLink>
+            <Button full size="lg" variant="outline" icon="checkSmall" onClick={onSend} style={{ marginTop: 10 }}>Mark as ready</Button>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 10, fontSize: 11.5, color: 'var(--muted)' }}>
-              <Icon name="shield" size={14} /> Verified & {r.taxName}-checked · reply-to your email
+              <Icon name="shield" size={14} /> Verified & {r.taxName}-checked
             </div>
-            {!canEmail && (
-              <div style={{ marginTop: 10, padding: '10px 12px', borderRadius: 'var(--r-sm)', background: 'var(--warn-soft)', color: 'var(--warn-ink)', fontSize: 12.2, lineHeight: 1.45 }}>
-                Add your business email, client email, and required invoice fields before sending.
-              </div>
-            )}
-            {sendState.message && (
-              <div style={{ marginTop: 10, padding: '10px 12px', borderRadius: 'var(--r-sm)', background: sendState.status === 'sent' ? 'var(--ok-soft)' : sendState.status === 'error' ? 'var(--bad-soft)' : 'var(--surface-2)', color: sendState.status === 'sent' ? 'var(--ok)' : sendState.status === 'error' ? 'var(--bad)' : 'var(--ink-2)', fontSize: 12.2, lineHeight: 1.45 }}>
-                {sendState.message}
-              </div>
-            )}
           </Card>
         </div>
       </div>
@@ -818,7 +777,6 @@ function Success({ store, region, go, resetFlow, elapsed }) {
   const r = REGIONS[region];
   const inv = store.invoice, c = store.client || {};
   const totals = computeTotals(inv, region);
-  const wasEmailed = !!inv.emailSent;
   const next = [
     { icon: 'download', title: 'Download the PDF', desc: 'Keep the invoice file and attach it to your email.', cta: 'Download', download: true },
     { icon: 'invoice', title: 'Create another invoice', desc: 'Reuse your business setup and start a fresh draft.', cta: 'New invoice', action: resetFlow },
@@ -832,11 +790,11 @@ function Success({ store, region, go, resetFlow, elapsed }) {
             <path d="M4.5 12.5 9.5 18 20 6" />
           </svg>
         </div>
-        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 600, letterSpacing: '-0.025em' }}>Invoice #{inv.number} {wasEmailed ? 'was sent' : 'is ready'}</h1>
+        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 600, letterSpacing: '-0.025em' }}>Invoice #{inv.number} is ready</h1>
         <p style={{ margin: '8px 0 0', fontSize: 15, color: 'var(--muted)' }}>
-          {fmtMoney(totals.total, region, { currency: inv.currency })} {wasEmailed ? 'sent to' : 'prepared for'} {c.name} at <span className="num">{c.email}</span>
+          {fmtMoney(totals.total, region, { currency: inv.currency })} prepared for {c.name} at <span className="num">{c.email}</span>
         </p>
-        {elapsed && <div style={{ marginTop: 14, display: 'inline-flex' }}><Badge tone="brand" icon="bolt">First invoice {wasEmailed ? 'sent' : 'prepared'} in {elapsed}</Badge></div>}
+        {elapsed && <div style={{ marginTop: 14, display: 'inline-flex' }}><Badge tone="brand" icon="bolt">First invoice prepared in {elapsed}</Badge></div>}
       </div>
 
       {/* status tracker */}
@@ -849,7 +807,7 @@ function Success({ store, region, go, resetFlow, elapsed }) {
               <div className="num" style={{ fontSize: 12.5, color: 'var(--muted)' }}>{fmtMoney(totals.total, region, { currency: inv.currency })} · due {inv.dueDate}</div>
             </div>
           </div>
-          <Badge tone="ok" icon={wasEmailed ? 'mail' : 'checkSmall'}>{wasEmailed ? 'Sent' : 'Ready'}</Badge>
+          <Badge tone="ok" icon="checkSmall">Ready</Badge>
         </div>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           {[['Ready', true], ['Downloaded', true], ['Shared', false], ['Paid', false]].map(([label, done], i, arr) => (
