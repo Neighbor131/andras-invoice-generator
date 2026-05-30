@@ -219,7 +219,13 @@ function createInvoiceCaptureLayer(node) {
     'pointer-events:none',
     'z-index:2147483647',
     'box-shadow:none',
+    'margin:0',
+    'padding:0',
   ].join(';');
+  node.style.margin = '0';
+  node.style.position = 'relative';
+  node.style.left = '0';
+  node.style.top = '0';
   layer.appendChild(node);
   document.body.appendChild(layer);
   return layer;
@@ -391,9 +397,9 @@ async function downloadInvoicePdf(store, region) {
         .set({
           margin: 0,
           filename: fileName,
-          image: { type: 'jpeg', quality: 0.98 },
+          image: { type: 'jpeg', quality: 1 },
           html2canvas: {
-            scale: 2,
+            scale: 4,
             useCORS: true,
             backgroundColor: '#ffffff',
             letterRendering: true,
@@ -405,11 +411,17 @@ async function downloadInvoicePdf(store, region) {
             y: 0,
             scrollX: 0,
             scrollY: 0,
+            onclone: (doc) => {
+              doc.documentElement.style.margin = '0';
+              doc.body.style.margin = '0';
+              doc.body.style.padding = '0';
+              doc.body.style.overflow = 'hidden';
+            },
           },
           jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' },
           pagebreak: { mode: ['css', 'legacy'] },
         })
-        .from(layer)
+        .from(node)
         .toPdf();
       await Promise.race([
         (async () => {
@@ -419,7 +431,7 @@ async function downloadInvoicePdf(store, region) {
           }
           await pdfWorker.save();
         })(),
-        promiseTimeout(12000, 'PDF render timed out'),
+        promiseTimeout(20000, 'PDF render timed out'),
       ]);
       window.lastInvoicePdfFilename = fileName;
       window.lastInvoicePdfRenderer = 'html2pdf-wrapper';
