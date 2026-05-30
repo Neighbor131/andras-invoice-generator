@@ -142,8 +142,8 @@ function DashboardEmpty({ go, region, emptyState, onTour }) {
   const r = REGIONS[region];
   const paths = [
     { icon: 'invoice', title: 'Send your first invoice', desc: 'Get paid for work you’ve already done.', primary: true, cta: 'Start invoice' },
-    { icon: 'recurring', title: 'Set up a recurring bill', desc: 'Automate retainers and subscriptions.', cta: 'Explore', target: 'recurringSetup' },
-    { icon: 'bank', title: 'Connect a bank account', desc: 'See money in and out in one place.', cta: 'Connect', target: 'moneyHome' },
+    { icon: 'download', title: 'Download a real PDF', desc: 'Export the finished invoice locally.', cta: 'Available after build', target: 'setup', locked: true },
+    { icon: 'shield', title: 'No account required', desc: 'Draft details stay in this browser.', cta: 'Local workspace', target: 'setup', locked: true },
   ];
 
   if (emptyState === 'tasks') {
@@ -153,11 +153,11 @@ function DashboardEmpty({ go, region, emptyState, onTour }) {
           sub="Three things stand between you and your first payment. The first one is the only one that matters today." />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12, maxWidth: 720 }}>
           {paths.map((p, i) => (
-            <Card key={i} hover onClick={() => go(p.primary ? 'setup' : p.target)}
+            <Card key={i} hover={!p.locked} onClick={() => !p.locked && go(p.primary ? 'setup' : p.target)}
               style={{ display: 'flex', alignItems: 'center', gap: 18, padding: '20px 22px',
                 borderColor: p.primary ? 'var(--brand)' : 'var(--line)',
                 background: p.primary ? 'var(--brand-softer)' : 'var(--surface)',
-                cursor: 'pointer', opacity: p.primary ? 1 : 0.9 }}>
+                cursor: p.locked ? 'default' : 'pointer', opacity: p.primary ? 1 : 0.9 }}>
               <div style={{ width: 46, height: 46, borderRadius: 'var(--r-md)', display: 'grid', placeItems: 'center', flex: 'none',
                 background: p.primary ? 'var(--brand)' : 'var(--surface-3)', color: p.primary ? 'var(--on-brand)' : 'var(--muted)' }}>
                 <Icon name={p.icon} size={23} />
@@ -168,7 +168,7 @@ function DashboardEmpty({ go, region, emptyState, onTour }) {
               </div>
               {p.primary
                 ? <Button onClick={() => go('setup')} iconRight="arrowRight">{p.cta}</Button>
-                : <Button variant="outline" size="sm" onClick={() => go(p.target)} iconRight="arrowRight">{p.cta}</Button>}
+                : <Badge tone="neutral" size="sm">{p.cta}</Badge>}
             </Card>
           ))}
         </div>
@@ -203,6 +203,9 @@ function DashboardEmpty({ go, region, emptyState, onTour }) {
                 </div>
               ))}
             </div>
+            <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--muted)' }}>
+              <Icon name="shield" size={15} /> No account yet. Your draft is saved only in this browser.
+            </div>
           </div>
           {/* invoice glance */}
           <div style={{ background: 'var(--surface-2)', borderLeft: '1px solid var(--line)', padding: 30, display: 'grid', placeItems: 'center' }}>
@@ -230,11 +233,11 @@ function DashboardEmpty({ go, region, emptyState, onTour }) {
       </Card>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginTop: 16, maxWidth: 880 }}>
-        {[['recurring', 'Recurring invoices', 'Retainers on autopilot', 'recurringSetup'], ['receipt', 'Track expenses', 'Snap receipts, sort later', 'expensesHome'], ['bank', 'Connect your bank', 'Reconcile in one place', 'moneyHome']].map(([ic, t, d, target]) => (
-          <Card key={t} hover onClick={() => go(target)} style={{ padding: '18px 18px', opacity: 0.92 }}>
+        {[['download', 'Real PDF export', 'Download and share yourself'], ['shield', 'Local workspace', 'No sign-in required'], ['globe', 'Country-aware setup', 'Prefixes, currency and tax defaults']].map(([ic, t, d]) => (
+          <Card key={t} style={{ padding: '18px 18px', opacity: 0.92 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-              <span style={{ color: 'var(--faint)' }}><Icon name={ic} size={20} /></span>
-              <Badge tone="brand" size="sm">Clickable</Badge>
+              <span style={{ color: 'var(--brand)' }}><Icon name={ic} size={20} /></span>
+              <Badge tone="brand" size="sm">MVP</Badge>
             </div>
             <div style={{ fontSize: 14.5, fontWeight: 560 }}>{t}</div>
             <div style={{ fontSize: 12.5, color: 'var(--muted)', marginTop: 2 }}>{d}</div>
@@ -432,78 +435,39 @@ function GuidedSetup({ store, update, region, go, setupLayout }) {
    3 — CLIENT ADD
 ============================================================ */
 function ClientAdd({ store, update, region, go }) {
-  const r = REGIONS[region];
-  const [tab, setTab] = useStateA('suggested');
   const [draft, setDraft] = useStateA({ name: '', email: '', company: '', address: '', country: defaultCountryForRegion(region) });
   const selected = store.client;
 
-  const pick = (c) => update({ client: c });
   const saveManual = () => { if (draft.name && draft.email) update({ client: { ...draft } }); };
 
   return (
     <div style={{ animation: 'fadeUp .35s ease both', maxWidth: 760 }}>
       <ScreenHead eyebrow="Step 2 of 4 · Client" title="Who are you invoicing?"
-        sub="Add a client once and Andras remembers their details, currency and tax treatment for next time." />
+        sub="Enter the recipient details that should appear on this invoice. No contacts are imported and nothing is shared with Andras." />
 
-      <div style={{ display: 'flex', gap: 6, padding: 4, background: 'var(--surface-3)', borderRadius: 'var(--r-md)', width: 'fit-content', marginBottom: 18 }}>
-        {[['suggested', 'Suggested', 'sparkle'], ['manual', 'Add manually', 'plus']].map(([id, label, ic]) => (
-          <button key={id} onClick={() => setTab(id)}
-            style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 16px', borderRadius: 'var(--r-sm)', cursor: 'pointer', fontSize: 13.5, fontWeight: 540,
-              border: 'none', background: tab === id ? 'var(--surface)' : 'transparent', color: tab === id ? 'var(--ink)' : 'var(--muted)', boxShadow: tab === id ? 'var(--sh-1)' : 'none' }}>
-            <Icon name={ic} size={16} />{label}
-          </button>
-        ))}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', background: 'var(--brand-softer)', border: '1px solid var(--brand-soft)', borderRadius: 'var(--r-md)', marginBottom: 18, maxWidth: 680 }}>
+        <span style={{ color: 'var(--brand)', flex: 'none' }}><Icon name="shield" size={18} /></span>
+        <div style={{ fontSize: 13, color: 'var(--ink-2)', lineHeight: 1.45 }}>
+          <b style={{ color: 'var(--ink)', fontWeight: 580 }}>Local-only MVP.</b> Client details are used for the invoice PDF and saved only in this browser draft.
+        </div>
       </div>
 
-      {tab === 'suggested' && (
-        <div style={{ display: 'grid', gap: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--muted)', marginBottom: 2 }}>
-            <Icon name="info" size={15} /> Pulled from your connected Google contacts — nothing is shared until you invoice them.
+      <Card style={{ animation: 'fadeIn .2s ease both' }}>
+        <div style={{ display: 'grid', gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <Field label="Client / contact name" required><Input value={draft.name} onChange={(v) => setDraft({ ...draft, name: v })} placeholder="Client name" /></Field>
+            <Field label="Billing email" required hint="Shown in the draft email copy"><Input value={draft.email} onChange={(v) => setDraft({ ...draft, email: v })} placeholder="billing@company.com" /></Field>
           </div>
-          {SUGGESTED_CLIENTS.map((c) => {
-            const on = selected && selected.email === c.email;
-            return (
-              <Card key={c.email} hover onClick={() => pick(c)}
-                style={{ display: 'flex', alignItems: 'center', gap: 15, padding: '16px 18px', cursor: 'pointer',
-                  borderColor: on ? 'var(--brand)' : 'var(--line)', background: on ? 'var(--brand-softer)' : 'var(--surface)' }}>
-                <Monogram name={c.name} size={42} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 15, fontWeight: 560 }}>{c.name}</div>
-                  <div style={{ fontSize: 13, color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.email} · {c.address}</div>
-                </div>
-                <Badge tone="neutral" size="sm">{c.src}</Badge>
-                <span style={{ width: 22, height: 22, borderRadius: 99, flex: 'none', display: 'grid', placeItems: 'center',
-                  border: '2px solid ' + (on ? 'var(--brand)' : 'var(--line-strong)'), background: on ? 'var(--brand)' : 'transparent', color: 'var(--on-brand)' }}>
-                  {on && <Icon name="checkSmall" size={13} stroke={3} />}
-                </span>
-              </Card>
-            );
-          })}
-          <button onClick={() => setTab('manual')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '14px', borderRadius: 'var(--r-md)', cursor: 'pointer',
-            border: '1.5px dashed var(--line-strong)', background: 'transparent', color: 'var(--ink-2)', fontSize: 14, fontWeight: 530 }}>
-            <Icon name="plus" size={17} /> Add a different client manually
-          </button>
+          <Field label="Company" optional><Input value={draft.company} onChange={(v) => setDraft({ ...draft, company: v })} placeholder="Client company" /></Field>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: 12 }}>
+            <Field label="Billing address" optional><Input value={draft.address} onChange={(v) => setDraft({ ...draft, address: v })} placeholder="Street, city, postal code" /></Field>
+            <Field label="Country" hint={`${invoicePrefixForCountry(draft.country)} country prefix`}><Select value={draft.country} onChange={(v) => setDraft({ ...draft, country: v })} options={ALL_COUNTRY_OPTIONS} /></Field>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <Button onClick={saveManual} disabled={!(draft.name && draft.email)} icon="plus">Save client</Button>
+          </div>
         </div>
-      )}
-
-      {tab === 'manual' && (
-        <Card style={{ animation: 'fadeIn .2s ease both' }}>
-          <div style={{ display: 'grid', gap: 14 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <Field label="Client / contact name" required><Input value={draft.name} onChange={(v) => setDraft({ ...draft, name: v })} placeholder="Jordan Lee" /></Field>
-              <Field label="Billing email" required hint="Where the invoice is delivered"><Input value={draft.email} onChange={(v) => setDraft({ ...draft, email: v })} placeholder="billing@company.com" /></Field>
-            </div>
-            <Field label="Company" optional><Input value={draft.company} onChange={(v) => setDraft({ ...draft, company: v })} placeholder="Company Ltd." /></Field>
-            <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: 12 }}>
-              <Field label="Billing address" optional><Input value={draft.address} onChange={(v) => setDraft({ ...draft, address: v })} placeholder="Street, city, postal code" /></Field>
-              <Field label="Country" hint={`${invoicePrefixForCountry(draft.country)} country prefix`}><Select value={draft.country} onChange={(v) => setDraft({ ...draft, country: v })} options={ALL_COUNTRY_OPTIONS} /></Field>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <Button onClick={saveManual} disabled={!(draft.name && draft.email)} icon="plus">Save client</Button>
-            </div>
-          </div>
-        </Card>
-      )}
+      </Card>
 
       {selected && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 11, marginTop: 16, padding: '13px 16px', background: 'var(--ok-soft)', borderRadius: 'var(--r-md)', animation: 'fadeIn .25s ease both' }}>

@@ -273,11 +273,7 @@ function freshInvoice(region, countryName) {
   };
 }
 
-const SUGGESTED_CLIENTS = [
-  { name: 'Meridian Studio', email: 'ap@meridianstudio.com', company: 'Meridian Studio LLC', address: '441 Tehama St, San Francisco, CA', country: 'United States', src: 'From your Gmail' },
-  { name: 'Holt & Vane', email: 'billing@holtvane.co', company: 'Holt & Vane Ltd', address: '12 Car/lisle Rd, London', country: 'United Kingdom', src: 'Imported contact' },
-  { name: 'Northwind Coffee', email: 'finance@northwind.coffee', company: 'Northwind Coffee Co', address: 'Prinsengracht 210, Amsterdam', country: 'Netherlands', src: 'From your Gmail' },
-];
+const SUGGESTED_CLIENTS = [];
 
 Object.assign(window, {
   REGIONS, fmtMoney, lineTotal, computeTotals, computeChecks, readiness, canSend,

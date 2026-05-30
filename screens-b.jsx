@@ -213,21 +213,25 @@ function downloadInvoicePdf(store, region) {
   return fileName;
 }
 
-function PdfDownloadLink({ store, region, children = 'PDF', size = 'md' }) {
+function PdfDownloadLink({ store, region, children = 'PDF', size = 'md', full, style }) {
   const payload = buildInvoicePdfPayload(store, region);
   const href = `data:application/pdf;base64,${btoa(payload.pdf)}`;
-  const h = size === 'sm' ? 34 : 42;
-  const fs = size === 'sm' ? 13.5 : 14.5;
-  const px = size === 'sm' ? 12 : 17;
+  const sizeMap = {
+    sm: { h: 34, fs: 13.5, px: 12 },
+    md: { h: 42, fs: 14.5, px: 17 },
+    lg: { h: 50, fs: 16, px: 24 },
+  }[size] || { h: 42, fs: 14.5, px: 17 };
   return (
     <a href={href} download={payload.fileName}
       onClick={() => { window.lastInvoicePdfFilename = payload.fileName; window.lastInvoicePdfBytes = payload.pdf.length; }}
       style={{
-        height: h, padding: `0 ${px}px`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+        height: sizeMap.h, padding: `0 ${sizeMap.px}px`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+        width: full ? '100%' : 'auto',
         borderRadius: 'var(--r-sm)', border: '1px solid var(--line-2)', background: 'var(--surface)', color: 'var(--ink)',
-        boxShadow: 'var(--sh-1)', textDecoration: 'none', fontSize: fs, fontWeight: 540, whiteSpace: 'nowrap',
+        boxShadow: 'var(--sh-1)', textDecoration: 'none', fontSize: sizeMap.fs, fontWeight: 540, whiteSpace: 'nowrap',
+        ...style,
       }}>
-      <Icon name="download" size={fs + 3} />{children}
+      <Icon name="download" size={sizeMap.fs + 3} />{children}
     </a>
   );
 }
@@ -303,7 +307,7 @@ function ReadinessRail({ store, region, go, compact }) {
           <div>
             <div style={{ fontSize: 14.5, fontWeight: 580 }}>Invoice readiness</div>
             <div style={{ fontSize: 12.5, color: blockers ? 'var(--warn-ink)' : 'var(--ok)' }}>
-              {blockers ? `${blockers} thing${blockers > 1 ? 's' : ''} left before sending` : 'Ready to send'}
+              {blockers ? `${blockers} thing${blockers > 1 ? 's' : ''} left before finishing` : 'Ready to download'}
             </div>
           </div>
         </div>
@@ -329,7 +333,7 @@ function ReadinessRail({ store, region, go, compact }) {
       {!compact && (
         <div style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.5, padding: '0 4px', display: 'flex', gap: 8 }}>
           <span style={{ color: 'var(--faint)', flex: 'none' }}><Icon name="info" size={15} /></span>
-          Setup folds into this invoice — fix anything by jumping back, then return here. Nothing blocks you until you press send.
+          Setup folds into this invoice — fix anything by jumping back, then return here. Nothing blocks you until you finish the PDF.
         </div>
       )}
     </div>
@@ -487,7 +491,7 @@ function CompletenessCheck({ store, region, go }) {
   return (
     <div style={{ animation: 'fadeUp .35s ease both', maxWidth: 720 }}>
       <ScreenHead eyebrow="Step 4 of 4 · Check" title="Smart completeness check"
-        sub="Before anything leaves your account, Andras checks the invoice for compliance, payment and formatting errors." />
+        sub="Before you share the PDF, Andras checks the invoice for compliance, payment and formatting errors." />
 
       <Card elevated style={{ padding: 0, overflow: 'hidden', marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 18, padding: '22px 24px',
@@ -495,7 +499,7 @@ function CompletenessCheck({ store, region, go }) {
           <ReadinessRing pct={pct} size={60} stroke={6} />
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>
-              {ready ? 'This invoice is ready to send' : `${blockers.length} issue${blockers.length > 1 ? 's' : ''} to fix before sending`}
+              {ready ? 'This invoice is ready to download' : `${blockers.length} issue${blockers.length > 1 ? 's' : ''} to fix before download`}
             </div>
             <div style={{ fontSize: 13.5, color: 'var(--ink-2)', marginTop: 2 }}>
               {ready ? 'All required checks pass. Optional suggestions are listed below.' : 'We’ve linked each issue to the exact step that fixes it.'}
@@ -679,7 +683,7 @@ function Preview({ store, region, go }) {
         </div>
       </div>
 
-      <FlowFooter onBack={() => go('check')} onNext={() => go('send')} nextLabel="Continue to send" nextIcon="mail" />
+      <FlowFooter onBack={() => go('check')} onNext={() => go('send')} nextLabel="Finish invoice" nextIcon="download" />
     </div>
   );
 }
@@ -693,11 +697,11 @@ function SendFlow({ store, update, region, go, onSend }) {
   const totals = computeTotals(inv, region);
   const setInv = (patch) => update({ invoice: { ...store.invoice, ...patch } });
   const subject = inv.emailSubject || `Invoice #${inv.number} from ${store.business.name || 'Andras'} — ${fmtMoney(totals.total, region, { currency: inv.currency })} due`;
-  const body = inv.emailBody || `Hi ${(c.name || '').split(' ')[0] || 'there'},\n\nPlease find invoice #${inv.number} for ${fmtMoney(totals.total, region, { currency: inv.currency })}, due ${inv.dueDate}. You can pay by card or bank transfer using the button below.\n\nThank you,\n${store.business.name || ''}`;
+  const body = inv.emailBody || `Hi ${(c.name || '').split(' ')[0] || 'there'},\n\nPlease find invoice #${inv.number} for ${fmtMoney(totals.total, region, { currency: inv.currency })}, due ${inv.dueDate}. Payment details are included in the PDF.\n\nThank you,\n${store.business.name || ''}`;
 
   return (
     <div style={{ animation: 'fadeUp .35s ease both' }}>
-      <ScreenHead eyebrow="Send" title="Send your invoice" sub="Review the message, attachments and payment options — then send." />
+      <ScreenHead eyebrow="Finish" title="Download and share your invoice" sub="Andras prepares the PDF and email copy. Public MVP users send it from their own inbox." />
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 320px', gap: 22, alignItems: 'start' }}>
         <Card>
           <div style={{ display: 'grid', gap: 14 }}>
@@ -720,11 +724,11 @@ function SendFlow({ store, update, region, go, onSend }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <Card style={{ padding: 18 }}>
             <div className="eyebrow" style={{ marginBottom: 12 }}>Payment options</div>
-            <ToggleRow icon="link" title="Online payment link" desc="Card, Apple Pay & bank — paid 3× faster" on={inv.paymentLink} onChange={(v) => setInv({ paymentLink: v })} />
+            <ToggleRow icon="link" title="Payment instructions" desc="Adds your bank and payment methods to the PDF" on={inv.paymentLink} onChange={(v) => setInv({ paymentLink: v })} />
             <Divider style={{ margin: '12px 0' }} />
-            <ToggleRow icon="recurring" title="Make recurring" desc="Repeat this invoice on a schedule" on={!!inv.recurring} onChange={(v) => setInv({ recurring: v })} />
+            <ToggleRow icon="recurring" title="Recurring invoices" desc="Coming later with accounts and saved clients" on={false} onChange={() => {}} />
             <Divider style={{ margin: '12px 0' }} />
-            <ToggleRow icon="clock" title="Payment reminders" desc="Auto-nudge if unpaid after the due date" on={inv.reminders !== false} onChange={(v) => setInv({ reminders: v })} />
+            <ToggleRow icon="clock" title="Payment reminders" desc="Coming later with email delivery and tracking" on={false} onChange={() => {}} />
           </Card>
           <Card style={{ padding: 18 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
@@ -732,9 +736,10 @@ function SendFlow({ store, update, region, go, onSend }) {
               <span className="num" style={{ fontSize: 20, fontWeight: 600, color: 'var(--brand)' }}>{fmtMoney(totals.total, region, { currency: inv.currency })}</span>
             </div>
             <div className="num" style={{ fontSize: 11.5, color: 'var(--muted)', marginBottom: 14 }}>to {c.name} · due {inv.dueDate}</div>
-            <Button full size="lg" icon="mail" onClick={onSend}>Send invoice</Button>
+            <PdfDownloadLink store={store} region={region} full size="lg">Download PDF</PdfDownloadLink>
+            <Button full size="lg" variant="outline" icon="checkSmall" onClick={onSend} style={{ marginTop: 10 }}>Mark as ready</Button>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 10, fontSize: 11.5, color: 'var(--muted)' }}>
-              <Icon name="shield" size={14} /> Verified & {r.taxName}-checked
+              <Icon name="shield" size={14} /> Verified & {r.taxName}-checked · no email sent
             </div>
           </Card>
         </div>
@@ -764,9 +769,9 @@ function Success({ store, region, go, resetFlow, elapsed }) {
   const inv = store.invoice, c = store.client || {};
   const totals = computeTotals(inv, region);
   const next = [
-    { icon: 'recurring', title: 'Make this recurring', desc: 'Bill monthly without lifting a finger', cta: 'Set schedule', target: 'recurringSetup' },
-    { icon: 'receipt', title: 'Log an expense', desc: 'Track costs against this client', cta: 'Add expense', target: 'expensesHome' },
-    { icon: 'bank', title: 'Connect your bank', desc: 'Auto-match this payment when it lands', cta: 'Connect', target: 'moneyHome' },
+    { icon: 'download', title: 'Download the PDF', desc: 'Keep the invoice file and attach it to your email.', cta: 'Download', download: true },
+    { icon: 'invoice', title: 'Create another invoice', desc: 'Reuse your business setup and start a fresh draft.', cta: 'New invoice', action: resetFlow },
+    { icon: 'home', title: 'Back to workspace', desc: 'Return to the local dashboard without creating an account.', cta: 'Home', target: 'dashboard' },
   ];
   return (
     <div style={{ animation: 'fadeUp .35s ease both', maxWidth: 880 }}>
@@ -776,11 +781,11 @@ function Success({ store, region, go, resetFlow, elapsed }) {
             <path d="M4.5 12.5 9.5 18 20 6" />
           </svg>
         </div>
-        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 600, letterSpacing: '-0.025em' }}>Invoice #{inv.number} is on its way</h1>
+        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 600, letterSpacing: '-0.025em' }}>Invoice #{inv.number} is ready</h1>
         <p style={{ margin: '8px 0 0', fontSize: 15, color: 'var(--muted)' }}>
-          {fmtMoney(totals.total, region, { currency: inv.currency })} sent to {c.name} at <span className="num">{c.email}</span>
+          {fmtMoney(totals.total, region, { currency: inv.currency })} prepared for {c.name} at <span className="num">{c.email}</span>
         </p>
-        {elapsed && <div style={{ marginTop: 14, display: 'inline-flex' }}><Badge tone="brand" icon="bolt">First invoice sent in {elapsed}</Badge></div>}
+        {elapsed && <div style={{ marginTop: 14, display: 'inline-flex' }}><Badge tone="brand" icon="bolt">First invoice prepared in {elapsed}</Badge></div>}
       </div>
 
       {/* status tracker */}
@@ -793,10 +798,10 @@ function Success({ store, region, go, resetFlow, elapsed }) {
               <div className="num" style={{ fontSize: 12.5, color: 'var(--muted)' }}>{fmtMoney(totals.total, region, { currency: inv.currency })} · due {inv.dueDate}</div>
             </div>
           </div>
-          <Badge tone="ok" icon="mail">Sent</Badge>
+          <Badge tone="ok" icon="checkSmall">Ready</Badge>
         </div>
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          {[['Sent', true], ['Delivered', true], ['Viewed', false], ['Paid', false]].map(([label, done], i, arr) => (
+          {[['Ready', true], ['Downloaded', true], ['Shared', false], ['Paid', false]].map(([label, done], i, arr) => (
             <React.Fragment key={label}>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7 }}>
                 <span style={{ width: 26, height: 26, borderRadius: 99, display: 'grid', placeItems: 'center', flex: 'none',
@@ -815,11 +820,13 @@ function Success({ store, region, go, resetFlow, elapsed }) {
       <div className="eyebrow" style={{ marginBottom: 11 }}>Recommended next</div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
         {next.map((n) => (
-          <Card key={n.title} hover onClick={() => go(n.target)} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <Card key={n.title} hover onClick={() => n.action ? n.action() : (n.target && go(n.target))} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <span style={{ color: 'var(--brand)' }}><Icon name={n.icon} size={22} /></span>
             <div style={{ fontSize: 14.5, fontWeight: 560, marginTop: 4 }}>{n.title}</div>
             <div style={{ fontSize: 12.5, color: 'var(--muted)', flex: 1, lineHeight: 1.45 }}>{n.desc}</div>
-            <Button variant="outline" size="sm" iconRight="arrowRight" onClick={() => go(n.target)} style={{ marginTop: 6, alignSelf: 'flex-start' }}>{n.cta}</Button>
+            {n.download
+              ? <PdfDownloadLink store={store} region={region} variant="outline" size="sm" style={{ marginTop: 6, alignSelf: 'flex-start' }}>Download</PdfDownloadLink>
+              : <Button variant="outline" size="sm" iconRight="arrowRight" onClick={() => n.action ? n.action() : go(n.target)} style={{ marginTop: 6, alignSelf: 'flex-start' }}>{n.cta}</Button>}
           </Card>
         ))}
       </div>

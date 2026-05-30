@@ -10,7 +10,7 @@ const PRODUCT_TITLES = {
   moneyHome: 'Money',
   expensesHome: 'Expenses',
   recurringSetup: 'Recurring',
-  success: 'Invoice sent',
+  success: 'Invoice ready',
 };
 
 const ROUTES = [
@@ -26,12 +26,12 @@ function routeFromHash() {
 const CASE_NOTES = {
   dashboard: { metric: 'Activation entry point', body: 'Single, unmissable primary action. We measure click-through to setup and resist competing CTAs that dilute activation.' },
   setup:     { metric: 'Setup completion rate · Drop-off by step', body: 'Progressive disclosure + smart regional defaults cut fields by ~40%. Nothing blocks “Continue”, so we don’t lose users who want to finish setup later.' },
-  client:    { metric: 'Time to first invoice', body: 'Suggested contacts remove the highest-friction manual step. Picking beats typing — the fastest path to a valid recipient.' },
+  client:    { metric: 'Time to first invoice', body: 'Manual entry stays focused on invoice-critical fields only. Users add a real recipient without needing an account or contact import.' },
   build:     { metric: 'Validation error rate', body: 'The live Readiness rail surfaces issues as they happen, not at the end. Errors get fixed in context before they ever become a failed send.' },
   check:     { metric: 'First invoice send rate · Validation error rate', body: 'A correctness gate that’s helpful, not punishing: every blocker links to its fix. We separate must-fix (block) from worth-a-look (warn).' },
   preview:   { metric: 'Invoice edit / reopen rate', body: 'Edit hotspots let users correct in place instead of restarting. Confidence here reduces post-send reopens and credit notes.' },
-  send:      { metric: 'Payment link adoption · First payment received', body: 'Payment link on by default (paid ~3× faster) but clearly toggleable. We never dark-pattern it on.' },
-  success:   { metric: 'Time to first invoice (closed) · Next-action adoption', body: 'We celebrate the win, expose status tracking, and seed the next activation loop: recurring, expenses, bank connect.' },
+  send:      { metric: 'PDF download rate · Share intent', body: 'The public MVP prepares a real PDF and reusable email copy. Sending, tracking and payment links are reserved for an authenticated product.' },
+  success:   { metric: 'Time to first invoice (closed)', body: 'The public MVP closes with a PDF download and clear next action instead of pretending to send email or track payments without an account.' },
 };
 
 const TOUR_STEPS = [
@@ -44,8 +44,8 @@ const TOUR_STEPS = [
   {
     screen: 'client',
     icon: 'clients',
-    title: 'Pick or add a client',
-    body: 'Suggested contacts reduce typing, while manual entry stays available for every first-time customer.',
+    title: 'Add the real recipient',
+    body: 'Enter only the client details needed for this invoice. No contacts are imported and nothing is shared with Andras.',
   },
   {
     screen: 'build',
@@ -56,20 +56,20 @@ const TOUR_STEPS = [
   {
     screen: 'check',
     icon: 'shield',
-    title: 'Fix issues before sending',
+    title: 'Fix issues before sharing',
     body: 'The readiness check separates true blockers from warnings and links each issue back to the right step.',
   },
   {
     screen: 'preview',
     icon: 'doc',
     title: 'Preview the client experience',
-    body: 'The PDF, payment block and edit hotspots make the invoice feel safe to send before anything leaves the account.',
+    body: 'The PDF, payment block and edit hotspots make the invoice feel safe to download before anything is shared.',
   },
   {
     screen: 'send',
     icon: 'mail',
-    title: 'Send, track and keep moving',
-    body: 'The final step explains attachments, payment options and reminders, then hands users into status tracking.',
+    title: 'Download and share',
+    body: 'The final step prepares a PDF and email copy. Public MVP users stay in control of sending it from their own inbox.',
   },
 ];
 
@@ -132,10 +132,7 @@ function GuidedTourCoachmark({ stepIndex, onNext, onBack, onSkip }) {
 function Sidebar({ screen, go, region }) {
   const items = [
     { id: 'home', icon: 'home', label: 'Home', target: 'dashboard' },
-    { id: 'invoices', icon: 'invoice', label: 'Invoices', target: 'invoicesHome', badge: 'flow', screens: ['invoicesHome', 'estimatesHome', 'recurringSetup'] },
-    { id: 'clients', icon: 'clients', label: 'Clients', target: 'clientsHome', screens: ['clientsHome'] },
-    { id: 'money', icon: 'money', label: 'Money', target: 'moneyHome', screens: ['moneyHome'] },
-    { id: 'expenses', icon: 'receipt', label: 'Expenses', target: 'expensesHome', screens: ['expensesHome'] },
+    { id: 'invoices', icon: 'invoice', label: 'Invoice flow', target: 'invoicesHome', badge: 'flow', screens: ['invoicesHome'] },
   ];
   const inFlow = FLOW.includes(screen) || screen === 'success';
   return (
@@ -162,10 +159,10 @@ function Sidebar({ screen, go, region }) {
         </button>
         <Divider style={{ margin: '8px 0' }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 8px' }}>
-          <Monogram name="Sam Rivera" size={34} tone={256} />
+          <Monogram name="Local Workspace" size={34} tone={256} />
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 540, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Sam Rivera</div>
-            <div style={{ fontSize: 11.5, color: 'var(--muted)' }} className="num">{REGIONS[region].label}</div>
+            <div style={{ fontSize: 13, fontWeight: 540, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Local workspace</div>
+            <div style={{ fontSize: 11.5, color: 'var(--muted)' }}>No sign-in required</div>
           </div>
         </div>
       </div>
@@ -211,6 +208,9 @@ function Topbar({ screen, go, region, setRegion, elapsedLive, onTour }) {
           title="Toggle region (demo)">
           <Icon name="globe" size={15} /> {REGIONS[region].code} · {region}
         </button>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '6px 11px', borderRadius: 'var(--r-pill)', border: '1px solid var(--line-2)', background: 'var(--surface)', fontSize: 12.5, fontWeight: 530, color: 'var(--ink-2)' }}>
+          <Icon name="shield" size={15} /> Local only
+        </span>
         <button onClick={onTour}
           style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '6px 11px', borderRadius: 'var(--r-pill)', border: '1px solid var(--brand)', background: 'var(--brand-soft)', cursor: 'pointer', fontSize: 12.5, fontWeight: 560, color: 'var(--brand-strong)' }}>
           <Icon name="sparkle" size={15} /> Free tour
@@ -235,16 +235,48 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "caseStudy": false
 }/*EDITMODE-END*/;
 
+const LOCAL_STORE_KEY = 'andras.invoice.local.v1';
+
+function createInitialStore(region) {
+  const country = defaultCountryForRegion(region);
+  return {
+    business: { name: '', type: 'Sole proprietor / freelancer', country, logo: false, logoData: '', logoPdfData: '', logoName: '', logoError: '', taxRegistered: undefined, taxId: '', address: '', accountName: '', iban: '', bankFilled: false, methods: ['Card'] },
+    client: null,
+    invoice: freshInvoice(region, country),
+    numberClash: false,
+  };
+}
+
+function loadLocalStore(region) {
+  try {
+    const stored = window.localStorage.getItem(LOCAL_STORE_KEY);
+    if (!stored) return createInitialStore(region);
+    const parsed = JSON.parse(stored);
+    return { ...createInitialStore(region), ...parsed };
+  } catch (error) {
+    return createInitialStore(region);
+  }
+}
+
+function storeWithoutHeavyAssets(store) {
+  return {
+    ...store,
+    business: {
+      ...store.business,
+      logo: false,
+      logoData: '',
+      logoPdfData: '',
+      logoName: store.business.logoData ? '' : store.business.logoName,
+      logoError: '',
+    },
+  };
+}
+
 function App() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
   const [screen, setScreen] = useS(routeFromHash);
   const [region, setRegionState] = useS(t.region);
-  const [store, setStore] = useS(() => ({
-    business: { name: '', type: 'Sole proprietor / freelancer', country: defaultCountryForRegion(t.region), logo: false, logoData: '', logoPdfData: '', logoName: '', logoError: '', taxRegistered: undefined, taxId: '', address: '', accountName: '', iban: '', bankFilled: false, methods: ['Card'] },
-    client: null,
-    invoice: freshInvoice(t.region, defaultCountryForRegion(t.region)),
-    numberClash: false,
-  }));
+  const [store, setStore] = useS(() => loadLocalStore(t.region));
   const [startTime, setStartTime] = useS(null);
   const [elapsed, setElapsed] = useS(null);
   const [live, setLive] = useS(null);
@@ -264,6 +296,14 @@ function App() {
         items: s.invoice.items.map((it) => ({ ...it, vat: s.business.taxRegistered ? (region === 'EU' ? 21 : 0) : 0 })) },
     }));
   }, [region]);
+
+  useE(() => {
+    try {
+      window.localStorage.setItem(LOCAL_STORE_KEY, JSON.stringify(storeWithoutHeavyAssets(store)));
+    } catch (error) {
+      // Keep the app usable if a browser blocks storage or an uploaded logo is too large.
+    }
+  }, [store]);
 
   // apply density + accent + font to root
   useE(() => {
@@ -338,6 +378,13 @@ function App() {
     go('build'); setScreen('build');
   };
 
+  const clearLocalData = () => {
+    try { window.localStorage.removeItem(LOCAL_STORE_KEY); } catch (error) {}
+    setStore(createInitialStore(region));
+    setStartTime(null); setElapsed(null); setLive(null);
+    go('dashboard');
+  };
+
   const screenProps = { store, update, region, go, t };
   let body;
   if (screen === 'dashboard') body = <DashboardEmpty go={go} region={region} emptyState={t.emptyState} onTour={startTour} />;
@@ -386,6 +433,8 @@ function App() {
 
         <TweakSection label="Presentation" />
         <TweakToggle label="Case study mode" value={t.caseStudy} onChange={(v) => setTweak('caseStudy', v)} />
+        <TweakButton label="Local data" />
+        <Button variant="outline" size="sm" icon="trash" onClick={clearLocalData}>Clear local draft</Button>
         <TweakButton label="Jump to a screen" />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
           {[['dashboard','Dashboard'],['invoicesHome','Invoices'],['estimatesHome','Estimates'],['recurringSetup','Recurring'],['expensesHome','Expenses'],['moneyHome','Money'],['clientsHome','Clients'],['setup','Setup'],['client','Client'],['build','Builder'],['check','Check'],['preview','Preview'],['send','Send'],['success','Success']].map(([id,label]) => (
