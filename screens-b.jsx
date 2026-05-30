@@ -995,7 +995,7 @@ function Success({ store, region, go, resetFlow, elapsed }) {
   return (
     <div style={{ animation: 'fadeUp .35s ease both', maxWidth: 880 }}>
       <div style={{ textAlign: 'center', marginBottom: 30 }}>
-        <div style={{ width: 'min(480px, 100%)', aspectRatio: '1341 / 1173', margin: '0 auto 20px', display: 'grid', placeItems: 'center', animation: 'fadeUp .35s ease both' }}>
+        <div style={{ width: 'min(320px, 100%)', aspectRatio: '1263 / 757', margin: '0 auto 18px', display: 'grid', placeItems: 'center', animation: 'fadeUp .35s ease both' }}>
           <img src="assets/invoice-sent-illustration.png" alt="Invoice sent illustration"
             style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
         </div>
