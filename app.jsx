@@ -10,12 +10,13 @@ const PRODUCT_TITLES = {
   moneyHome: 'Money',
   expensesHome: 'Expenses',
   recurringSetup: 'Recurring',
+  settings: 'Settings',
   success: 'Invoice ready',
 };
 
 const ROUTES = [
   'dashboard', 'invoicesHome', 'estimatesHome', 'clientsHome', 'moneyHome', 'expensesHome', 'recurringSetup',
-  'setup', 'client', 'build', 'check', 'preview', 'send', 'success',
+  'settings', 'setup', 'client', 'build', 'check', 'preview', 'send', 'success',
 ];
 
 function routeFromHash() {
@@ -154,7 +155,7 @@ function Sidebar({ screen, go, region }) {
         })}
       </nav>
       <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <button onClick={() => {}} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '9px 10px', borderRadius: 'var(--r-sm)', border: 'none', cursor: 'pointer', background: 'transparent', color: 'var(--ink-2)', fontSize: 14, fontWeight: 500 }}>
+        <button onClick={() => go('settings')} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '9px 10px', borderRadius: 'var(--r-sm)', border: 'none', cursor: 'pointer', background: screen === 'settings' ? 'var(--brand-soft)' : 'transparent', color: screen === 'settings' ? 'var(--brand-strong)' : 'var(--ink-2)', fontSize: 14, fontWeight: screen === 'settings' ? 560 : 500 }}>
           <Icon name="settings" size={19} />Settings
         </button>
         <Divider style={{ margin: '8px 0' }} />
@@ -167,6 +168,66 @@ function Sidebar({ screen, go, region }) {
         </div>
       </div>
     </aside>
+  );
+}
+
+function SettingsPage({ store, region, go, clearLocalData }) {
+  const totals = computeTotals(store.invoice, region);
+  const hasDraft = !!(store.business.name || store.client || totals.total || (store.invoice.items || []).some((item) => item.desc));
+  const rows = [
+    ['Workspace mode', 'Browser workspace'],
+    ['Storage', 'Saved on this device only'],
+    ['Cloud sync', 'Off'],
+    ['Accounts', 'Not required'],
+    ['Email sending', 'Not connected'],
+  ];
+  return (
+    <div style={{ animation: 'fadeUp .35s ease both', maxWidth: 760 }}>
+      <ScreenHead eyebrow="Settings" title="Browser workspace"
+        sub="Andras keeps this MVP simple: your draft stays in this browser, and the final invoice downloads as a PDF." />
+
+      <Card elevated style={{ padding: 0, overflow: 'hidden', marginBottom: 16 }}>
+        <div style={{ padding: '18px 20px', display: 'flex', alignItems: 'center', gap: 14, borderBottom: '1px solid var(--line)' }}>
+          <span style={{ width: 42, height: 42, borderRadius: 'var(--r-md)', display: 'grid', placeItems: 'center', flex: 'none', background: 'var(--brand-soft)', color: 'var(--brand-strong)' }}>
+            <Icon name="shield" size={21} />
+          </span>
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-0.015em' }}>No account or cloud sync</div>
+            <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 2 }}>Data is stored in your browser storage on this device.</div>
+          </div>
+        </div>
+        <div style={{ padding: 20, display: 'grid', gap: 12 }}>
+          {rows.map(([label, value]) => (
+            <div key={label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, paddingBottom: 11, borderBottom: '1px solid var(--line)' }}>
+              <span style={{ fontSize: 13.5, color: 'var(--muted)' }}>{label}</span>
+              <span style={{ fontSize: 13.5, fontWeight: 560, color: 'var(--ink)' }}>{value}</span>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <Card style={{ padding: 20, marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 18 }}>
+          <div>
+            <div style={{ fontSize: 15.5, fontWeight: 600, letterSpacing: '-0.015em' }}>Local draft</div>
+            <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4, lineHeight: 1.45 }}>
+              {hasDraft ? 'A draft is saved in this browser. Clearing it removes business, client and invoice fields from this device.' : 'No meaningful draft data is saved yet.'}
+            </div>
+          </div>
+          <Button variant="danger" icon="trash" onClick={clearLocalData} disabled={!hasDraft}>Clear draft</Button>
+        </div>
+      </Card>
+
+      <Card style={{ padding: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 18 }}>
+          <div>
+            <div style={{ fontSize: 15.5, fontWeight: 600, letterSpacing: '-0.015em' }}>Invoice setup</div>
+            <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4, lineHeight: 1.45 }}>Return to the guided flow to edit business details, payment details, client, line items and invoice style.</div>
+          </div>
+          <Button variant="outline" iconRight="arrowRight" onClick={() => go('setup')}>Open setup</Button>
+        </div>
+      </Card>
+    </div>
   );
 }
 
@@ -408,6 +469,7 @@ function App() {
   else if (screen === 'expensesHome') body = <ExpenseCapture store={store} update={update} region={region} go={go} />;
   else if (screen === 'moneyHome') body = <MoneyDashboard store={store} region={region} go={go} />;
   else if (screen === 'clientsHome') body = <ClientDirectory region={region} go={go} />;
+  else if (screen === 'settings') body = <SettingsPage store={store} region={region} go={go} clearLocalData={clearLocalData} />;
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
@@ -444,7 +506,7 @@ function App() {
         <Button variant="outline" size="sm" icon="trash" onClick={clearLocalData}>Clear local draft</Button>
         <TweakButton label="Jump to a screen" />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-          {[['dashboard','Dashboard'],['invoicesHome','Invoices'],['estimatesHome','Estimates'],['recurringSetup','Recurring'],['expensesHome','Expenses'],['moneyHome','Money'],['clientsHome','Clients'],['setup','Setup'],['client','Client'],['build','Builder'],['check','Check'],['preview','Preview'],['send','Send'],['success','Success']].map(([id,label]) => (
+          {[['dashboard','Dashboard'],['settings','Settings'],['invoicesHome','Invoices'],['estimatesHome','Estimates'],['recurringSetup','Recurring'],['expensesHome','Expenses'],['moneyHome','Money'],['clientsHome','Clients'],['setup','Setup'],['client','Client'],['build','Builder'],['check','Check'],['preview','Preview'],['send','Send'],['success','Success']].map(([id,label]) => (
             <button key={id} onClick={() => go(id)} style={{ padding: '7px 8px', fontSize: 12, borderRadius: 7, cursor: 'pointer',
               border: '1px solid var(--line-2)', background: screen === id ? 'var(--brand-soft)' : 'var(--surface)', color: screen === id ? 'var(--brand-strong)' : 'var(--ink-2)', fontWeight: 520 }}>{label}</button>
           ))}
