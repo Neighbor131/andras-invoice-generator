@@ -12,6 +12,13 @@ function htmlEscape(value) {
   return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+const GEORGIAN_FONT_STACK = "'SF Georgian','Noto Sans Georgian','Poppins',Arial,sans-serif";
+const LATIN_INVOICE_FONT_STACK = "'Poppins',Arial,sans-serif";
+
+function invoiceFontStack(lang) {
+  return lang === 'ka' ? GEORGIAN_FONT_STACK : LATIN_INVOICE_FONT_STACK;
+}
+
 function rgbForPdf(name, fallback) {
   const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
   const hex = value.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
@@ -103,7 +110,7 @@ function buildInvoiceHtmlElement(store, region) {
   const node = document.createElement('div');
   node.style.cssText = 'width:794px;min-height:1123px;background:#fff;pointer-events:none;';
   node.innerHTML = `
-    <section lang="${htmlEscape(lang)}" style="width:794px;min-height:1123px;background:#fff;color:#1E2019;font-family:${lang === 'ka' ? "'Noto Sans Georgian','Poppins',Arial,sans-serif" : "'Poppins',Arial,sans-serif"};padding:0;box-sizing:border-box;">
+    <section lang="${htmlEscape(lang)}" style="width:794px;min-height:1123px;background:#fff;color:#1E2019;font-family:${invoiceFontStack(lang)};padding:0;box-sizing:border-box;">
       <div style="height:10px;background:${accent.hex};"></div>
       <div style="padding:58px 64px 44px;box-sizing:border-box;">
         <header style="display:flex;align-items:flex-start;justify-content:space-between;gap:32px;margin-bottom:46px;">
@@ -511,16 +518,12 @@ function InvoiceStylePicker({ value, onChange }) {
 function InvoiceLanguagePicker({ value, onChange }) {
   const current = INVOICE_COPY[value] ? value : 'en';
   return (
-    <div style={{ display: 'inline-grid', gridTemplateColumns: '1fr 1fr', gap: 4, padding: 4, border: '1px solid var(--line)', borderRadius: 'var(--r-pill)', background: 'var(--surface-2)', width: '100%', maxWidth: 260 }}>
-      {['en', 'ka'].map((lang) => {
-        const on = current === lang;
-        return (
-          <button key={lang} onClick={() => onChange(lang)}
-            style={{ height: 34, border: 'none', borderRadius: 'var(--r-pill)', background: on ? 'var(--surface)' : 'transparent', color: on ? 'var(--ink)' : 'var(--muted)', boxShadow: on ? 'var(--sh-1)' : 'none', cursor: 'pointer', fontSize: 12.5, fontWeight: 580, fontFamily: lang === 'ka' ? "'Noto Sans Georgian', var(--font-ui)" : 'var(--font-ui)' }}>
-            {INVOICE_COPY[lang].label}
-          </button>
-        );
-      })}
+    <div style={{ maxWidth: 260, fontFamily: current === 'ka' ? "'SF Georgian','Noto Sans Georgian',var(--font-ui)" : 'var(--font-ui)' }}>
+      <Select value={current} onChange={onChange}
+        options={[
+          { value: 'en', label: INVOICE_COPY.en.label },
+          { value: 'ka', label: INVOICE_COPY.ka.label },
+        ]} />
     </div>
   );
 }
@@ -827,7 +830,7 @@ function Preview({ store, region, go, onFinish }) {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr)', placeItems: 'center' }}>
         {/* the document */}
-        <div lang={lang} style={{ width: '100%', maxWidth: 720, background: 'var(--surface)', borderRadius: 'var(--r-lg)', boxShadow: 'var(--sh-3)', border: '1px solid var(--line)', overflow: 'hidden', fontFamily: lang === 'ka' ? "'Noto Sans Georgian', var(--font-ui)" : 'var(--font-ui)' }}>
+        <div lang={lang} style={{ width: '100%', maxWidth: 720, background: 'var(--surface)', borderRadius: 'var(--r-lg)', boxShadow: 'var(--sh-3)', border: '1px solid var(--line)', overflow: 'hidden', fontFamily: lang === 'ka' ? "'SF Georgian','Noto Sans Georgian',var(--font-ui)" : 'var(--font-ui)' }}>
           <div style={{ height: 6, background: accent.hex }} />
           <div style={{ padding: '40px 44px 44px' }}>
             {/* header */}
