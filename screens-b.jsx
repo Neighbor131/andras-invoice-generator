@@ -583,11 +583,11 @@ function InvoiceBuilder({ store, update, region, go, showRail }) {
           {/* meta */}
           <Card>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 14 }}>
-              <Field label="Invoice no." hint={`${invoiceCountry} invoices use ${numberInfo.expectedPrefix}-0001 style.`}>
+              <Field label="Invoice no." hint={`Industry-standard sequential format: ${numberInfo.expectedFormat}.`}>
                 <Input value={inv.number}
                   onChange={(v) => setInv({ number: normalizeInvoiceNumberInput(v, invoiceCountry) })}
                   onBlur={() => setInv({ number: invoiceNumberForCountry(inv.number, invoiceCountry) })}
-                  mono prefix="#" invalid={!numberInfo.matchesCountry} />
+                  mono prefix="#" invalid={!numberInfo.matchesStandard} />
               </Field>
               <Field label="Issue date"><Input value={inv.issueDate} onChange={(v) => setInv({ issueDate: v })} mono /></Field>
               <Field label="Payment terms">

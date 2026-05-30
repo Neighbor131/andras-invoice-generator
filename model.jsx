@@ -173,10 +173,15 @@ function invoiceSequenceFromNumber(number) {
   return match ? match[1] : '0001';
 }
 
+function invoiceYearFromNumber(number) {
+  const match = String(number || '').match(/(?:^|-)((?:19|20)\d{2})(?:-|$)/);
+  return match ? match[1] : String(new Date().getFullYear());
+}
+
 function invoiceNumberForCountry(number, countryName) {
-  const prefix = invoicePrefixForCountry(countryName);
+  const year = invoiceYearFromNumber(number);
   const sequence = invoiceSequenceFromNumber(number).padStart(4, '0');
-  return `${prefix}-${sequence}`;
+  return `INV-${year}-${sequence}`;
 }
 
 function normalizeInvoiceNumberInput(input, countryName) {
@@ -185,14 +190,19 @@ function normalizeInvoiceNumberInput(input, countryName) {
 }
 
 function invoiceNumberDetails(number, countryName) {
-  const expectedPrefix = invoicePrefixForCountry(countryName);
-  const match = String(number || '').trim().match(/^([A-Z]{2})-(\d{3,})$/i);
+  const year = invoiceYearFromNumber(number);
+  const match = String(number || '').trim().match(/^INV-((?:19|20)\d{2})-(\d{3,})$/i);
+  const matchesStandard = !!match && Number(match[2]) > 0;
   return {
-    expectedPrefix,
+    expectedPrefix: 'INV',
+    expectedFormat: `INV-${year}-0001`,
+    year: match ? match[1] : year,
     sequence: invoiceSequenceFromNumber(number).padStart(4, '0'),
-    prefix: match ? match[1].toUpperCase() : '',
-    hasCountryPrefix: !!match,
-    matchesCountry: !!match && match[1].toUpperCase() === expectedPrefix,
+    prefix: match ? 'INV' : '',
+    hasCountryPrefix: false,
+    hasStandardPrefix: !!match,
+    matchesStandard,
+    matchesCountry: matchesStandard,
   };
 }
 
@@ -237,7 +247,7 @@ function computeChecks(store, region) {
     { id: 'bank', label: `Payment details (${paymentRail.label})`, detail: 'So the client knows where to pay', ok: !!(b.accountName && b.iban), severity: 'block', step: 'setup' },
     { id: 'client', label: 'Client & email', detail: c ? `${c.name} · ${c.email}` : 'No client selected', ok: !!(c && c.email), severity: 'block', step: 'client' },
     { id: 'items', label: 'At least one line item', detail: hasRealItem ? `${items.filter(i=>i.desc).length} item(s)` : 'Add a description, qty and price', ok: hasRealItem, severity: 'block', step: 'build' },
-    { id: 'number', label: 'Country-prefixed invoice number', detail: inv.number ? `#${inv.number} · expected ${numberInfo.expectedPrefix}-0001 style` : 'Auto-generated', ok: numberInfo.matchesCountry && !store.numberClash, severity: 'block', step: 'build' },
+    { id: 'number', label: 'Sequential invoice number', detail: inv.number ? `#${inv.number} · expected ${numberInfo.expectedFormat} style` : 'Auto-generated', ok: numberInfo.matchesStandard && !store.numberClash, severity: 'block', step: 'build' },
     { id: 'due', label: 'Due date & terms', detail: inv.terms || '—', ok: !!inv.terms, severity: 'warn', step: 'build' },
   ];
   return checks;
@@ -280,5 +290,5 @@ Object.assign(window, {
   freshInvoice, SUGGESTED_CLIENTS, COUNTRY_RECORDS, ALL_COUNTRY_OPTIONS,
   CURRENCY_RECORDS, CURRENCY_OPTIONS, currencyRecord, INVOICE_ACCENTS, invoiceAccentRecord, defaultCurrencyForCountry, paymentRailForCountry, flagUrlForCountryCode,
   defaultCountryForRegion, countryRecordFromName, invoicePrefixForCountry,
-  invoiceSequenceFromNumber, invoiceNumberForCountry, normalizeInvoiceNumberInput, invoiceNumberDetails, nextInvoiceNumber,
+  invoiceSequenceFromNumber, invoiceYearFromNumber, invoiceNumberForCountry, normalizeInvoiceNumberInput, invoiceNumberDetails, nextInvoiceNumber,
 });

@@ -52,7 +52,7 @@ const TOUR_STEPS = [
     screen: 'build',
     icon: 'invoice',
     title: 'Build and personalize the invoice',
-    body: 'Currency, country-prefixed invoice numbers, line items and invoice style all update the client-facing PDF.',
+    body: 'Currency, sequential invoice numbers, line items and invoice style all update the client-facing PDF.',
   },
   {
     screen: 'check',
