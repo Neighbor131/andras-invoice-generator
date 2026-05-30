@@ -559,7 +559,7 @@ function CheckGroup({ title, tone, items, go, stepOf, action }) {
 /* ============================================================
    6 — PREVIEW (with edit hotspots)
 ============================================================ */
-function Preview({ store, region, go }) {
+function Preview({ store, region, go, onFinish }) {
   const r = REGIONS[region];
   const inv = store.invoice, b = store.business, c = store.client || {};
   const accent = invoiceAccentRecord(inv.accent);
@@ -687,7 +687,7 @@ function Preview({ store, region, go }) {
         </div>
       </div>
 
-      <FlowFooter onBack={() => go('check')} onNext={() => go('send')} nextLabel="Finish invoice" nextIcon="download" />
+      <FlowFooter onBack={() => go('check')} onNext={onFinish || (() => { downloadInvoicePdf(store, region); go('success'); })} nextLabel="Finish & download" nextIcon="download" />
     </div>
   );
 }
@@ -745,8 +745,8 @@ function SendFlow({ store, update, region, go, onSend }) {
               <span className="num" style={{ fontSize: 20, fontWeight: 600, color: 'var(--brand)' }}>{fmtMoney(totals.total, region, { currency: inv.currency })}</span>
             </div>
             <div className="num" style={{ fontSize: 11.5, color: 'var(--muted)', marginBottom: 14 }}>to {c.name} · due {inv.dueDate}</div>
-            <PdfDownloadLink store={store} region={region} full size="lg">Download PDF</PdfDownloadLink>
-            <Button full size="lg" variant="outline" icon="checkSmall" onClick={onSend} style={{ marginTop: 10 }}>Mark as ready</Button>
+            <Button full size="lg" icon="download" onClick={onSend}>Finish & download PDF</Button>
+            <PdfDownloadLink store={store} region={region} full size="md" style={{ marginTop: 10 }}>Download only</PdfDownloadLink>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 10, fontSize: 11.5, color: 'var(--muted)' }}>
               <Icon name="shield" size={14} /> Verified & {r.taxName}-checked
             </div>

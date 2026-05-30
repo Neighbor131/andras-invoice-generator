@@ -431,12 +431,13 @@ function App() {
     });
   };
 
-  const onSend = () => {
+  const completeInvoice = ({ download = false } = {}) => {
+    if (download) downloadInvoicePdf(store, region);
     if (startTime) {
       const s = Math.floor((Date.now() - startTime) / 1000);
       setElapsed(`${Math.floor(s / 60)}m ${String(s % 60).padStart(2, '0')}s`);
     } else { setElapsed('1m 52s'); }
-    setScreen('success');
+    go('success');
     document.getElementById('scroll-area')?.scrollTo({ top: 0 });
   };
 
@@ -460,8 +461,8 @@ function App() {
   else if (screen === 'client') body = <ClientAdd {...screenProps} />;
   else if (screen === 'build') body = <InvoiceBuilder {...screenProps} showRail={t.showRail} />;
   else if (screen === 'check') body = <CompletenessCheck store={store} region={region} go={go} />;
-  else if (screen === 'preview') body = <Preview store={store} region={region} go={go} />;
-  else if (screen === 'send') body = <SendFlow {...screenProps} onSend={onSend} />;
+  else if (screen === 'preview') body = <Preview store={store} region={region} go={go} onFinish={() => completeInvoice({ download: true })} />;
+  else if (screen === 'send') body = <SendFlow {...screenProps} onSend={() => completeInvoice({ download: true })} />;
   else if (screen === 'success') body = <Success store={store} region={region} go={go} resetFlow={resetFlow} elapsed={elapsed} />;
   else if (screen === 'invoicesHome') body = <InvoiceCommandCenter store={store} update={update} region={region} go={go} />;
   else if (screen === 'estimatesHome') body = <EstimatesFlow store={store} update={update} region={region} go={go} />;
