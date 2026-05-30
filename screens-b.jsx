@@ -995,10 +995,9 @@ function Success({ store, region, go, resetFlow, elapsed }) {
   return (
     <div style={{ animation: 'fadeUp .35s ease both', maxWidth: 880 }}>
       <div style={{ textAlign: 'center', marginBottom: 30 }}>
-        <div style={{ width: 64, height: 64, borderRadius: 99, background: 'var(--ok-soft)', color: 'var(--ok)', display: 'grid', placeItems: 'center', margin: '0 auto 18px', animation: 'pop .5s cubic-bezier(.3,1.4,.5,1) both' }}>
-          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M4.5 12.5 9.5 18 20 6" />
-          </svg>
+        <div style={{ width: 'min(480px, 100%)', aspectRatio: '1341 / 1173', margin: '0 auto 20px', display: 'grid', placeItems: 'center', animation: 'fadeUp .35s ease both' }}>
+          <img src="assets/invoice-sent-illustration.png" alt="Invoice sent illustration"
+            style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
         </div>
         <h1 style={{ margin: 0, fontSize: 28, fontWeight: 600, letterSpacing: '-0.025em' }}>Invoice #{inv.number} is ready</h1>
         <p style={{ margin: '8px 0 0', fontSize: 15, color: 'var(--muted)' }}>
