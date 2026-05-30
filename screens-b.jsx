@@ -87,118 +87,101 @@ function buildInvoiceHtmlElement(store, region) {
   const items = (inv.items || []).filter((item) => item.desc);
   const taxRegistered = b.taxRegistered === true;
   const paymentRail = paymentRailForCountry(b.country, region);
-  const methods = (b.methods || []).join(' / ');
+  const bankIcon = `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="${accent.hex}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 5l9 5.5"/><path d="M5 10.5h14"/><path d="M6.5 10.5v6"/><path d="M10.5 10.5v6"/><path d="M13.5 10.5v6"/><path d="M17.5 10.5v6"/><path d="M4.5 16.5h15"/><path d="M3.5 19h17"/></svg>`;
+  const linkIcon = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#384D48" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.07 0l2.12-2.12a5 5 0 0 0-7.07-7.07L10.9 5.03"/><path d="M14 11a5 5 0 0 0-7.07 0L4.81 13.12a5 5 0 0 0 7.07 7.07l1.22-1.22"/></svg>`;
   const logo = b.logoData
-    ? `<img src="${b.logoData}" alt="" style="max-width:62px;max-height:48px;object-fit:contain;display:block;" />`
-    : `<div style="width:42px;height:42px;border-radius:14px;background:${accent.hex};color:#fff;display:grid;place-items:center;font-size:18px;font-weight:700;">${htmlEscape((b.name || 'A')[0].toUpperCase())}</div>`;
+    ? `<span style="width:54px;height:44px;border-radius:10px;background:#F3F6EB;border:1px solid #DCE8D1;display:grid;place-items:center;overflow:hidden;flex:none;"><img src="${b.logoData}" alt="" style="max-width:100%;max-height:100%;object-fit:contain;display:block;" /></span>`
+    : `<div style="width:44px;height:44px;border-radius:10px;background:${accent.hex};color:#fff;display:grid;place-items:center;font-size:22px;font-weight:700;flex:none;">${htmlEscape((b.name || 'A')[0].toUpperCase())}</div>`;
   const itemRows = items.length ? items.map((item) => {
     const desc = taxRegistered && Number(item.vat) > 0 ? `${item.desc} - ${r.taxName} ${item.vat}%` : item.desc;
     return `
-      <tr>
-        <td style="padding:16px 0;border-bottom:1px solid #E1E8D5;vertical-align:top;">
-          <div style="font-weight:500;color:#1E2019;">${htmlEscape(desc)}</div>
-        </td>
-        <td style="padding:16px 0;border-bottom:1px solid #E1E8D5;vertical-align:top;text-align:right;color:#394032;">${htmlEscape(item.qty || 0)}</td>
-        <td style="padding:16px 0;border-bottom:1px solid #E1E8D5;vertical-align:top;text-align:right;color:#394032;">${htmlEscape(fmtMoney(item.price, region, { currency: inv.currency }))}</td>
-        <td style="padding:16px 0;border-bottom:1px solid #E1E8D5;vertical-align:top;text-align:right;font-weight:600;color:#1E2019;">${htmlEscape(fmtMoney(lineTotal(item), region, { currency: inv.currency }))}</td>
-      </tr>`;
+      <div style="display:grid;grid-template-columns:1fr 50px 100px 100px;gap:10px;padding:13px 0;border-bottom:1px solid #DCE8D1;font-size:13.5px;">
+        <div style="color:#1E2019;">${htmlEscape(desc)}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;text-align:right;color:#1E2019;">${htmlEscape(item.qty || 0)}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;text-align:right;color:#1E2019;">${htmlEscape(fmtMoney(item.price, region, { currency: inv.currency }))}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;text-align:right;font-weight:600;color:#1E2019;">${htmlEscape(fmtMoney(lineTotal(item), region, { currency: inv.currency }))}</div>
+      </div>`;
   }).join('') : `
-      <tr>
-        <td colspan="4" style="padding:28px 0;border-bottom:1px solid #E1E8D5;text-align:center;color:#9AA18D;">${htmlEscape(copy.noLineItems)}</td>
-      </tr>`;
+      <div style="padding:24px 0;border-bottom:1px solid #DCE8D1;text-align:center;color:#9AA18D;font-size:13px;">${htmlEscape(copy.noLineItems)}</div>`;
 
   const node = document.createElement('div');
-  node.style.cssText = 'width:794px;min-height:1123px;background:#fff;pointer-events:none;';
+  node.style.cssText = 'width:794px;min-height:1123px;background:#FAFCF7;pointer-events:none;';
   node.innerHTML = `
-    <section lang="${htmlEscape(lang)}" style="width:794px;min-height:1123px;background:#fff;color:#1E2019;font-family:${invoiceFontStack(lang)};padding:0;box-sizing:border-box;">
-      <div style="height:10px;background:${accent.hex};"></div>
-      <div style="padding:58px 64px 44px;box-sizing:border-box;">
-        <header style="display:flex;align-items:flex-start;justify-content:space-between;gap:32px;margin-bottom:46px;">
-          <div style="display:flex;align-items:center;gap:16px;min-width:0;">
+    <section lang="${htmlEscape(lang)}" style="width:794px;min-height:1123px;background:#FAFCF7;color:#1E2019;font-family:${invoiceFontStack(lang)};padding:26px 24px;box-sizing:border-box;">
+      <div style="background:#fff;border:1px solid #DCE8D1;border-radius:22px;overflow:hidden;min-height:1068px;box-sizing:border-box;">
+        <div style="height:6px;background:${accent.hex};"></div>
+        <div style="padding:48px 52px 52px;box-sizing:border-box;">
+        <header style="display:flex;align-items:flex-start;justify-content:space-between;gap:32px;margin-bottom:42px;">
+          <div style="display:flex;align-items:center;gap:14px;min-width:0;">
             ${logo}
             <div>
-              <div style="font-size:15px;font-weight:600;letter-spacing:-.01em;color:#1E2019;">${htmlEscape(b.name || copy.yourBusiness)}</div>
-              <div style="font-size:11px;line-height:1.45;color:#69705F;margin-top:4px;max-width:250px;">${htmlEscape(b.address || copy.businessAddress)}</div>
+              <div style="font-size:17px;font-weight:600;letter-spacing:-.01em;color:#1E2019;">${htmlEscape(b.name || copy.yourBusiness)}</div>
+              <div style="font-size:12.5px;line-height:1.45;color:#69705F;margin-top:4px;max-width:250px;">${htmlEscape(b.address || copy.businessAddress)}</div>
             </div>
           </div>
           <div style="text-align:right;min-width:180px;">
-            <div style="font-size:36px;line-height:1.15;font-weight:650;letter-spacing:-.03em;color:#1E2019;">${htmlEscape(copy.invoiceTitle)}</div>
-            <div style="margin-top:12px;font-size:12px;font-weight:600;color:${accent.hex};letter-spacing:.08em;text-transform:uppercase;">#${htmlEscape(inv.number || 'draft')}</div>
+            <div style="font-size:34px;line-height:1.05;font-weight:650;letter-spacing:-.03em;color:#1E2019;">${htmlEscape(copy.invoiceTitle)}</div>
+            <div style="margin-top:12px;font-family:'IBM Plex Mono',monospace;font-size:13px;color:#394032;">#${htmlEscape(inv.number || 'draft')}</div>
           </div>
         </header>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:34px;margin-bottom:40px;">
-          <div style="border-top:1px solid #D0DBC2;padding-top:18px;">
-            <div style="font-size:10px;font-weight:700;color:#69705F;letter-spacing:.14em;text-transform:uppercase;margin-bottom:12px;">${htmlEscape(copy.billedTo)}</div>
-            <div style="font-size:17px;font-weight:600;letter-spacing:-.01em;">${htmlEscape(c.name || copy.clientName)}</div>
-            <div style="font-size:12px;line-height:1.65;color:#69705F;margin-top:6px;">
-              ${htmlEscape([c.company, c.email, c.address].filter(Boolean).join(' • ') || copy.clientDetails)}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:34px;margin-bottom:42px;">
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#69705F;letter-spacing:.18em;text-transform:uppercase;margin-bottom:14px;">${htmlEscape(copy.billedTo)}</div>
+            <div style="font-size:15px;font-weight:600;letter-spacing:-.01em;">${htmlEscape(c.name || copy.clientName)}</div>
+            <div style="font-size:13px;line-height:1.55;color:#69705F;margin-top:6px;">
+              ${htmlEscape([c.company, c.email, c.address].filter(Boolean).join('\n') || copy.clientDetails).replace(/\n/g, '<br/>')}
             </div>
           </div>
-          <div style="border-top:1px solid #D0DBC2;padding-top:18px;">
-            <div style="display:grid;grid-template-columns:1fr auto;gap:9px;font-size:12px;color:#69705F;">
-              <span>${htmlEscape(copy.issued)}</span><strong style="color:#1E2019;font-weight:500;">${htmlEscape(inv.issueDate || '-')}</strong>
-              <span>${htmlEscape(copy.due)}</span><strong style="color:#1E2019;font-weight:600;">${htmlEscape(inv.dueDate || '-')}</strong>
+          <div style="padding-top:2px;">
+            <div style="display:grid;grid-template-columns:1fr auto;gap:13px;font-size:13px;color:#69705F;">
+              <span>${htmlEscape(copy.issued)}</span><strong style="font-family:'IBM Plex Mono',monospace;color:#1E2019;font-weight:500;">${htmlEscape(inv.issueDate || '-')}</strong>
+              <span>${htmlEscape(copy.due)}</span><strong style="font-family:'IBM Plex Mono',monospace;color:#1E2019;font-weight:600;">${htmlEscape(inv.dueDate || '-')}</strong>
               <span>${htmlEscape(copy.terms)}</span><strong style="color:#1E2019;font-weight:500;">${htmlEscape(invoiceTermsLabel(inv.terms, inv, region))}</strong>
-              <span>${htmlEscape(copy.currency)}</span><strong style="color:#1E2019;font-weight:500;">${htmlEscape(inv.currency || r.code)}</strong>
             </div>
           </div>
         </div>
 
-        <table style="width:100%;border-collapse:collapse;margin-bottom:28px;font-size:12px;">
-          <thead>
-            <tr>
-              <th style="text-align:left;padding:0 0 12px;border-bottom:2px solid #1E2019;font-size:10px;color:#69705F;letter-spacing:.13em;text-transform:uppercase;">${htmlEscape(copy.description)}</th>
-              <th style="text-align:right;padding:0 0 12px;border-bottom:2px solid #1E2019;font-size:10px;color:#69705F;letter-spacing:.13em;text-transform:uppercase;width:58px;">${htmlEscape(copy.qty)}</th>
-              <th style="text-align:right;padding:0 0 12px;border-bottom:2px solid #1E2019;font-size:10px;color:#69705F;letter-spacing:.13em;text-transform:uppercase;width:112px;">${htmlEscape(copy.price)}</th>
-              <th style="text-align:right;padding:0 0 12px;border-bottom:2px solid #1E2019;font-size:10px;color:#69705F;letter-spacing:.13em;text-transform:uppercase;width:120px;">${htmlEscape(copy.amount)}</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${itemRows}
-          </tbody>
-        </table>
+        <div style="margin-bottom:28px;">
+          <div style="display:grid;grid-template-columns:1fr 50px 100px 100px;gap:10px;padding:0 0 11px;border-bottom:2px solid #1E2019;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:#69705F;letter-spacing:.18em;text-transform:uppercase;">${htmlEscape(copy.description)}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:#69705F;letter-spacing:.18em;text-transform:uppercase;text-align:right;">${htmlEscape(copy.qty)}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:#69705F;letter-spacing:.18em;text-transform:uppercase;text-align:right;">${htmlEscape(copy.price)}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:#69705F;letter-spacing:.18em;text-transform:uppercase;text-align:right;">${htmlEscape(copy.amount)}</div>
+          </div>
+          ${itemRows}
+        </div>
 
-        <div style="display:flex;justify-content:flex-end;margin-bottom:36px;">
-            <div style="width:270px;">
-              <div style="display:flex;justify-content:space-between;font-size:12px;color:#69705F;margin-bottom:10px;">
+        <div style="display:flex;justify-content:flex-end;margin:12px 0 38px;">
+          <div style="width:260px;">
+            <div style="display:flex;justify-content:space-between;font-size:13px;color:#69705F;margin-bottom:12px;">
               <span>${htmlEscape(copy.subtotal)}</span><span style="color:#1E2019;font-weight:500;">${htmlEscape(fmtMoney(totals.subtotal, region, { currency: inv.currency }))}</span>
             </div>
-            <div style="display:flex;justify-content:space-between;font-size:12px;color:#69705F;margin-bottom:14px;">
-              <span>${htmlEscape(r.taxName)}</span><span style="color:#1E2019;font-weight:500;">${htmlEscape(taxRegistered ? fmtMoney(totals.tax, region, { currency: inv.currency }) : copy.notApplicable)}</span>
+            <div style="display:flex;justify-content:space-between;font-size:13px;color:#69705F;margin-bottom:14px;">
+              <span>${htmlEscape(r.taxName)}</span><span style="color:#8F9786;font-weight:500;">${htmlEscape(taxRegistered ? fmtMoney(totals.tax, region, { currency: inv.currency }) : '-')}</span>
             </div>
             <div style="height:1px;background:#D0DBC2;margin-bottom:16px;"></div>
             <div style="display:flex;align-items:baseline;justify-content:space-between;gap:18px;">
-              <span style="font-size:14px;font-weight:600;color:#1E2019;">${htmlEscape(copy.totalDue)}</span>
+              <span style="font-size:14px;font-weight:600;color:#1E2019;white-space:nowrap;">${htmlEscape(copy.totalDue)}</span>
               <span style="font-size:24px;font-weight:700;letter-spacing:-.025em;color:${accent.hex};">${htmlEscape(fmtMoney(totals.total, region, { currency: inv.currency }))}</span>
             </div>
           </div>
         </div>
 
-        <div style="display:grid;grid-template-columns:1.2fr .8fr;gap:18px;margin-top:24px;">
-          <div style="background:#F3F6EB;border:1px solid #E1E8D5;border-radius:18px;padding:22px 24px;">
-            <div style="font-size:10px;font-weight:700;color:${accent.hex};letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px;">${htmlEscape(copy.paymentDetails)}</div>
-            <div style="font-size:14px;font-weight:600;color:#1E2019;">${htmlEscape(copy.payTo)} ${htmlEscape(b.accountName || b.name || copy.yourAccount)}</div>
-            <div style="font-size:12px;line-height:1.55;color:#69705F;margin-top:8px;">${htmlEscape(paymentRail.label)}: ${htmlEscape(b.iban || '-')}</div>
-            ${taxRegistered ? `<div style="font-size:12px;color:#69705F;margin-top:3px;">${htmlEscape(r.taxIdName)}: ${htmlEscape(b.taxId || '-')}</div>` : ''}
+        <div style="margin-top:42px;padding:20px 22px;background:#F3F6EB;border-radius:18px;display:flex;align-items:center;gap:16px;">
+          <span style="width:28px;height:28px;display:grid;place-items:center;flex:none;">${bankIcon}</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13.5px;font-weight:600;color:#1E2019;">${htmlEscape(copy.payTo)} ${htmlEscape(b.accountName || b.name || copy.yourAccount)}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#69705F;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${htmlEscape(paymentRail.label)}: ${htmlEscape(b.iban || '-')}</div>
           </div>
-          <div style="background:#fff;border:1px solid #E1E8D5;border-radius:18px;padding:22px 24px;">
-            <div style="font-size:10px;font-weight:700;color:#69705F;letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px;">${htmlEscape(copy.acceptedMethods)}</div>
-            <div style="font-size:13px;line-height:1.55;color:#394032;">${htmlEscape(methods || copy.bankTransfer)}</div>
-            ${inv.paymentLink ? `<div style="margin-top:12px;font-size:11px;font-weight:600;color:${accent.hex};">${htmlEscape(copy.paymentInstructions)}</div>` : ''}
-          </div>
+          ${inv.paymentLink ? `<span style="height:31px;padding:0 14px;border-radius:999px;background:#E2E8DE;color:#384D48;display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;white-space:nowrap;">${linkIcon}${htmlEscape(copy.payOnline)}</span>` : ''}
         </div>
 
         ${inv.notes ? `
-          <div style="margin-top:28px;border-top:1px solid #E1E8D5;padding-top:18px;">
-            <div style="font-size:10px;font-weight:700;color:#69705F;letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px;">${htmlEscape(copy.notes)}</div>
-            <div style="font-size:12px;line-height:1.65;color:#394032;">${htmlEscape(inv.notes)}</div>
+          <div style="margin-top:28px;">
+            <div style="font-size:13px;line-height:1.55;color:#69705F;">${htmlEscape(inv.notes)}</div>
           </div>` : ''}
-
-        <footer style="display:flex;justify-content:space-between;align-items:center;margin-top:46px;padding-top:16px;border-top:1px solid #E1E8D5;font-size:10.5px;color:#69705F;">
-          <span>${htmlEscape(copy.generatedBy)}</span>
-          <span>${htmlEscape(r.code)} · ${htmlEscape(inv.currency || r.code)}</span>
-        </footer>
+        </div>
       </div>
     </section>`;
   return node;
