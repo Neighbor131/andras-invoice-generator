@@ -150,6 +150,7 @@ function Badge({ children, tone = 'neutral', icon, size = 'md' }) {
   const tones = {
     neutral: { bg: 'var(--surface-3)', fg: 'var(--ink-2)' },
     brand:   { bg: 'var(--brand-soft)', fg: 'var(--brand-strong)' },
+    indigo:  { bg: '#EEF2FF', fg: '#3730A3' },
     ok:      { bg: 'var(--ok-soft)', fg: 'var(--ok)' },
     warn:    { bg: 'var(--warn-soft)', fg: 'var(--warn-ink)' },
     bad:     { bg: 'var(--bad-soft)', fg: 'var(--bad)' },

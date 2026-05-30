@@ -1038,7 +1038,7 @@ function Success({ store, region, go, resetFlow, elapsed }) {
         <p style={{ margin: '8px 0 0', fontSize: 15, color: 'var(--muted)' }}>
           {fmtMoney(totals.total, region, { currency: inv.currency })} prepared for {c.name} at <span className="num">{c.email}</span>
         </p>
-        {elapsed && <div style={{ marginTop: 14, display: 'inline-flex' }}><Badge tone="brand" icon="bolt">First invoice prepared in {elapsed}</Badge></div>}
+        {elapsed && <div style={{ marginTop: 14, display: 'inline-flex' }}><Badge tone="indigo" icon="bolt">First invoice prepared in {elapsed}</Badge></div>}
       </div>
 
       {/* status tracker */}
